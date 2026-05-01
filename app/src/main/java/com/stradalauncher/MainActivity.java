@@ -310,6 +310,47 @@ public class MainActivity extends AppCompatActivity {
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
         }
+
+        /**
+         * Lancia un intent personalizzato da JSON.
+         * Campi (tutti opzionali, almeno uno necessario):
+         *   component  "com.pkg/.Activity" oppure "com.pkg/com.pkg.Activity"
+         *   action     es. "android.intent.action.DIAL"
+         *   data       es. "tel:" oppure "content://..."
+         *   pkg        package hint (restringe la risoluzione)
+         */
+        @JavascriptInterface
+        public void launchIntent(String json) {
+            try {
+                JSONObject j = new JSONObject(json);
+                Intent i = new Intent();
+
+                String action    = j.optString("action",    "");
+                String component = j.optString("component", "");
+                String data      = j.optString("data",      "");
+                String pkg       = j.optString("pkg",       "");
+
+                if (!action.isEmpty())    i.setAction(action);
+                if (!data.isEmpty())      i.setData(android.net.Uri.parse(data));
+
+                if (!component.isEmpty()) {
+                    String[] parts = component.split("/", 2);
+                    if (parts.length == 2) {
+                        String cPkg   = parts[0].trim();
+                        String cClass = parts[1].trim();
+                        if (cClass.startsWith(".")) cClass = cPkg + cClass;
+                        i.setComponent(new ComponentName(cPkg, cClass));
+                    }
+                } else if (!pkg.isEmpty()) {
+                    i.setPackage(pkg);
+                }
+
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+            } catch (Exception e) {
+                Log.e(TAG, "launchIntent error: " + json, e);
+            }
+        }
     }
 
     // ─── GPS ─────────────────────────────────────────────────────────────────
