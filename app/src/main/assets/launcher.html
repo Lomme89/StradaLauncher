@@ -465,10 +465,39 @@ html, body {
   text-align: right;
   flex-shrink: 0;
 }
+
+/* dim overlay — software brightness fallback */
+#dim-overlay {
+  position: fixed; inset: 0;
+  background: #000;
+  pointer-events: none;
+  z-index: 998;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.bright-mode-btns { display: flex; gap: 0.6vw; margin-bottom: 1.2vh; }
+.bright-mode-btn {
+  flex: 1;
+  padding: clamp(6px, 1.1vh, 10px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: clamp(6px, 1vmin, 9px);
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(9px, 1.3vh, 12px);
+  cursor: pointer;
+  transition: border-color 0.13s, color 0.13s, background 0.13s;
+  text-align: center;
+}
+.bright-mode-btn:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
+.bright-mode-btn.active { border-color: var(--c4); color: var(--c4); background: rgba(251,191,36,0.08); }
+[data-theme="light"] .bright-mode-btn:hover { border-color: rgba(0,0,0,0.2); }
 </style>
 </head>
 <body>
 
+<div id="dim-overlay"></div>
 <div class="shell" id="shell">
 
   <!-- SIDEBAR -->
@@ -606,6 +635,10 @@ html, body {
       <!-- LUMINOSITÀ -->
       <div class="settings-section">
         <div class="settings-label">Luminosità display</div>
+        <div class="bright-mode-btns">
+          <button class="bright-mode-btn active" data-bmode="hardware" onclick="setBrightnessMode('hardware')">💡 Hardware</button>
+          <button class="bright-mode-btn" data-bmode="software" onclick="setBrightnessMode('software')">🎨 Filtro software</button>
+        </div>
         <div class="slider-row">
           <label>Tema scuro</label>
           <input type="range" id="bd-slider" min="10" max="100" step="5" value="50"
@@ -833,7 +866,8 @@ const SETTINGS_DEFAULTS = {
   textScale: 1.0,
   iconScale: 1.0,
   brightnessDark: 0.5,
-  brightnessLight: 0.9
+  brightnessLight: 0.9,
+  brightnessMode: 'hardware'
 };
 let settings = { ...SETTINGS_DEFAULTS };
 let autoThemeMq = null;
@@ -867,8 +901,19 @@ function applyThemeInternal(theme) {
     isDark = theme === 'dark';
   }
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  const brightness = isDark ? settings.brightnessDark : settings.brightnessLight;
-  try { Android.setScreenBrightness(brightness); } catch(e) {}
+  applyBrightness(isDark ? settings.brightnessDark : settings.brightnessLight);
+}
+
+function applyBrightness(value) {
+  if (settings.brightnessMode === 'software') {
+    // value 1.0 = no overlay, value 0.1 = 90% dark overlay
+    document.getElementById('dim-overlay').style.opacity = Math.max(0, 1 - value);
+    // reset hardware to system default when in software mode
+    try { Android.setScreenBrightness(-1); } catch(e) {}
+  } else {
+    document.getElementById('dim-overlay').style.opacity = 0;
+    try { Android.setScreenBrightness(value); } catch(e) {}
+  }
 }
 
 function setupAutoThemeListener() {
@@ -899,6 +944,10 @@ function openSettingsModal() {
   bl.value = Math.round(settings.brightnessLight * 100);
   document.getElementById('bl-val').textContent = Math.round(settings.brightnessLight * 100) + '%';
 
+  document.querySelectorAll('.bright-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.bmode === settings.brightnessMode);
+  });
+
   document.getElementById('settings-overlay').classList.add('open');
 }
 
@@ -928,22 +977,27 @@ function onIconScale(v) {
   document.getElementById('is-val').textContent = Number(v).toFixed(2).replace(/\.?0+$/,'') + '×';
 }
 
+function setBrightnessMode(mode) {
+  settings.brightnessMode = mode;
+  document.querySelectorAll('.bright-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.bmode === mode);
+  });
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  applyBrightness(isDark ? settings.brightnessDark : settings.brightnessLight);
+}
+
 function onBrightnessDark(v) {
   settings.brightnessDark = parseInt(v) / 100;
   document.getElementById('bd-val').textContent = v + '%';
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  if (isDark) {
-    try { Android.setScreenBrightness(settings.brightnessDark); } catch(e) {}
-  }
+  if (isDark) applyBrightness(settings.brightnessDark);
 }
 
 function onBrightnessLight(v) {
   settings.brightnessLight = parseInt(v) / 100;
   document.getElementById('bl-val').textContent = v + '%';
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  if (isLight) {
-    try { Android.setScreenBrightness(settings.brightnessLight); } catch(e) {}
-  }
+  if (isLight) applyBrightness(settings.brightnessLight);
 }
 
 // ══ SVG ICONS ══
