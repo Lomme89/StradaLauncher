@@ -25,6 +25,7 @@ import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
 import android.content.res.Configuration;
+import android.media.AudioManager;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
@@ -226,6 +227,57 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
+        public void mediaAction(String action) {
+            try {
+                MediaSessionManager msm = (MediaSessionManager)
+                    getSystemService(Context.MEDIA_SESSION_SERVICE);
+                ComponentName cn = new ComponentName(MainActivity.this, MediaListenerService.class);
+                List<MediaController> controllers = msm.getActiveSessions(cn);
+                if (controllers.isEmpty()) return;
+                MediaController.TransportControls tc = controllers.get(0).getTransportControls();
+                switch (action) {
+                    case "play":   tc.play(); break;
+                    case "pause":  tc.pause(); break;
+                    case "next":   tc.skipToNext(); break;
+                    case "prev":   tc.skipToPrevious(); break;
+                    case "toggle":
+                        PlaybackState ps = controllers.get(0).getPlaybackState();
+                        if (ps != null && ps.getState() == PlaybackState.STATE_PLAYING) tc.pause();
+                        else tc.play();
+                        break;
+                }
+            } catch (SecurityException e) {
+                // NotificationListenerService non abilitato
+            } catch (Exception e) {
+                Log.e(TAG, "mediaAction error", e);
+            }
+        }
+
+        @JavascriptInterface
+        public String getVolumeInfo() {
+            try {
+                AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                int current = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+                int max     = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                return "{\"current\":" + current + ",\"max\":" + max + "}";
+            } catch (Exception e) {
+                return "{\"current\":7,\"max\":15}";
+            }
+        }
+
+        @JavascriptInterface
+        public void setVolume(int level) {
+            try {
+                AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                am.setStreamVolume(AudioManager.STREAM_MUSIC,
+                    Math.max(0, Math.min(level, max)), 0);
+            } catch (Exception e) {
+                Log.e(TAG, "setVolume error", e);
+            }
+        }
+
+        @JavascriptInterface
         public void saveSettings(String json) {
             prefs.edit().putString("app_settings", json).apply();
         }
@@ -300,6 +352,7 @@ public class MainActivity extends AppCompatActivity {
     // Per l'integrazione completa vedi MediaListenerService.java.
     private final Handler mediaHandler = new Handler(Looper.getMainLooper());
     private String lastTrack = "";
+    private boolean lastPlayState = false;
 
     private void startMediaPolling() {
         mediaHandler.postDelayed(new Runnable() {
@@ -315,44 +368,67 @@ public class MainActivity extends AppCompatActivity {
         try {
             MediaSessionManager msm = (MediaSessionManager)
                 getSystemService(Context.MEDIA_SESSION_SERVICE);
-            // Richiede NotificationListenerService attivo (vedi setup)
-            ComponentName cn = new ComponentName(MainActivity.this,
-                MediaListenerService.class);
+            ComponentName cn = new ComponentName(MainActivity.this, MediaListenerService.class);
             List<MediaController> controllers = msm.getActiveSessions(cn);
-            if (!controllers.isEmpty()) {
-                MediaController mc = controllers.get(0);
-                MediaMetadata meta = mc.getMetadata();
-                PlaybackState state = mc.getPlaybackState();
-                if (meta != null && state != null &&
-                        state.getState() == PlaybackState.STATE_PLAYING) {
-                    String title = meta.getString(MediaMetadata.METADATA_KEY_TITLE);
-                    String artist = meta.getString(MediaMetadata.METADATA_KEY_ARTIST);
-                    String track = (artist != null ? artist + " — " : "") +
-                                   (title != null ? title : "");
-                    if (!track.equals(lastTrack)) {
-                        lastTrack = track;
-                        final String t = track;
-                        runOnUiThread(() ->
-                            webView.evaluateJavascript(
-                                "if(window.onMediaUpdate) window.onMediaUpdate(" +
-                                JSONObject.quote(t) + ");", null)
-                        );
-                    }
-                } else if (state == null ||
-                           state.getState() != PlaybackState.STATE_PLAYING) {
-                    if (!lastTrack.equals("")) {
-                        lastTrack = "";
-                        runOnUiThread(() ->
-                            webView.evaluateJavascript(
-                                "if(window.onMediaUpdate) window.onMediaUpdate('');", null)
-                        );
-                    }
+
+            if (controllers.isEmpty()) { clearMediaState(); return; }
+
+            MediaController mc = controllers.get(0);
+            MediaMetadata meta = mc.getMetadata();
+            PlaybackState state = mc.getPlaybackState();
+            boolean playing = state != null && state.getState() == PlaybackState.STATE_PLAYING;
+
+            if (playing != lastPlayState) {
+                lastPlayState = playing;
+                runOnUiThread(() -> webView.evaluateJavascript(
+                    "if(window.onPlaybackState) window.onPlaybackState(" + lastPlayState + ");", null));
+            }
+
+            if (meta != null && playing) {
+                String title  = meta.getString(MediaMetadata.METADATA_KEY_TITLE);
+                String artist = meta.getString(MediaMetadata.METADATA_KEY_ARTIST);
+                String track  = (artist != null ? artist + " — " : "") + (title != null ? title : "");
+                if (!track.equals(lastTrack)) {
+                    lastTrack = track;
+                    String artB64 = extractArtBase64(meta);
+                    final String t = track, a = artB64;
+                    runOnUiThread(() -> {
+                        webView.evaluateJavascript(
+                            "if(window.onMediaUpdate) window.onMediaUpdate(" + JSONObject.quote(t) + ");", null);
+                        webView.evaluateJavascript(
+                            "if(window.onAlbumArt) window.onAlbumArt(" + JSONObject.quote(a) + ");", null);
+                    });
                 }
+            } else if (!playing && !lastTrack.isEmpty()) {
+                clearMediaState();
             }
         } catch (SecurityException e) {
-            // NotificationListenerService non ancora abilitato — silenzioso
+            // NotificationListenerService non ancora abilitato
         } catch (Exception e) {
             Log.e(TAG, "Media poll error", e);
+        }
+    }
+
+    private String extractArtBase64(MediaMetadata meta) {
+        try {
+            Bitmap art = meta.getBitmap(MediaMetadata.METADATA_KEY_ART);
+            if (art == null) art = meta.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
+            if (art == null) return "";
+            Bitmap scaled = Bitmap.createScaledBitmap(art, 80, 80, true);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            scaled.compress(Bitmap.CompressFormat.JPEG, 65, bos);
+            return "data:image/jpeg;base64," + Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP);
+        } catch (Exception e) { return ""; }
+    }
+
+    private void clearMediaState() {
+        if (!lastTrack.isEmpty() || lastPlayState) {
+            lastTrack = ""; lastPlayState = false;
+            runOnUiThread(() -> {
+                webView.evaluateJavascript("if(window.onMediaUpdate) window.onMediaUpdate('');", null);
+                webView.evaluateJavascript("if(window.onAlbumArt) window.onAlbumArt('');", null);
+                webView.evaluateJavascript("if(window.onPlaybackState) window.onPlaybackState(false);", null);
+            });
         }
     }
 

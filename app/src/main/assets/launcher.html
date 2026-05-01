@@ -239,6 +239,42 @@ html, body {
 .edit-act-btn:hover { border-color: var(--hover-border); color: var(--text); }
 .edit-act-btn.danger:hover { border-color: #f87171; color: #f87171; }
 
+/* ══ ALBUM ART ══ */
+.album-art-wrap {
+  width: clamp(36px, 10vh, 54px);
+  height: clamp(36px, 10vh, 54px);
+  border-radius: clamp(4px, 1vmin, 8px);
+  flex-shrink: 0; overflow: hidden; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface2);
+}
+#album-art-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+  opacity: 0; transition: opacity 0.35s;
+}
+.album-art-wrap.has-art #album-art-img  { opacity: 1; }
+.album-art-wrap.has-art .np-indicator   { opacity: 0; }
+
+/* ══ MEDIA CONTROLS ══ */
+.media-controls { display: flex; align-items: center; gap: 0.2vw; margin: 0 1.2vw; flex-shrink: 0; }
+.mc-btn {
+  background: transparent; border: none; color: var(--muted); cursor: pointer;
+  width: clamp(28px, 4.2vh, 38px); height: clamp(28px, 4.2vh, 38px);
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; transition: color 0.13s, background 0.13s; flex-shrink: 0;
+}
+.mc-btn:hover { color: var(--text); background: var(--surface2); }
+.mc-btn svg { width: clamp(12px, 2.2vh, 17px); height: clamp(12px, 2.2vh, 17px); }
+.mc-play { color: var(--text); }
+.mc-play svg { width: clamp(14px, 2.6vh, 20px); height: clamp(14px, 2.6vh, 20px); }
+
+/* ══ VOLUME ══ */
+.vol-wrap { display: flex; align-items: center; gap: 0.5vw; flex-shrink: 0; }
+.vol-icon { color: var(--muted); display: flex; align-items: center; flex-shrink: 0; }
+.vol-icon svg { width: clamp(12px, 2vh, 16px); height: clamp(12px, 2vh, 16px); }
+#vol-slider { width: clamp(55px, 7vw, 110px); accent-color: var(--c1); cursor: pointer; }
+
 /* ══ SETTINGS MODAL ══ */
 .settings-modal { width: clamp(380px, 58vw, 720px); max-height: 88vh; }
 .settings-body  { overflow-y: auto; flex: 1; margin-bottom: 1.5vh; scrollbar-width: thin; scrollbar-color: var(--border) transparent; display: flex; flex-direction: column; gap: 2vh; padding-right: 4px; }
@@ -315,19 +351,50 @@ html, body {
     </div>
 
     <div class="bottombar">
+
+      <!-- now playing -->
       <div class="now-playing">
-        <div class="np-indicator paused" id="np-indicator">
-          <div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div>
+        <div class="album-art-wrap" id="album-art-wrap">
+          <div class="np-indicator paused" id="np-indicator">
+            <div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div>
+          </div>
+          <img id="album-art-img" src="" alt="">
         </div>
-        <div class="np-label">&nbsp;—&nbsp;</div>
         <div class="np-track" id="np-track">Nessuna riproduzione</div>
       </div>
+
+      <!-- media controls -->
+      <div class="media-controls">
+        <button class="mc-btn" onclick="mediaAction('prev')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 16.811c0 .864-.933 1.406-1.683.977l-7.108-4.061a1.125 1.125 0 0 1 0-1.954l7.108-4.061A1.125 1.125 0 0 1 21 8.689v8.122ZM11.25 16.811c0 .864-.933 1.406-1.683.977l-7.108-4.061a1.125 1.125 0 0 1 0-1.954l7.108-4.061a1.125 1.125 0 0 1 1.683.977v8.122Z"/></svg>
+        </button>
+        <button class="mc-btn mc-play" id="mc-play" onclick="mediaAction('toggle')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg>
+        </button>
+        <button class="mc-btn" onclick="mediaAction('next')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061A1.125 1.125 0 0 1 3 16.811V8.69ZM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061a1.125 1.125 0 0 1-1.683-.977V8.69Z"/></svg>
+        </button>
+      </div>
+
       <div class="sep"></div>
+
+      <!-- volume -->
+      <div class="vol-wrap">
+        <span class="vol-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/></svg>
+        </span>
+        <input type="range" id="vol-slider" min="0" max="100" value="50" oninput="onVolumeSlider(this.value)">
+      </div>
+
+      <div class="sep"></div>
+
+      <!-- speed + edit -->
       <div class="speed-wrap">
         <div class="speed-val" id="speed-val">0</div>
         <div class="speed-unit">km/h</div>
       </div>
       <button class="edit-btn" id="edit-btn" onclick="toggleEditMode()">✎ Personalizza</button>
+
     </div>
   </div>
 </div>
@@ -546,6 +613,7 @@ window.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 10000);
   loadInstalledApps();
+  initVolume();
 });
 
 // ══ BUTTON CONFIG ══
@@ -705,11 +773,54 @@ document.getElementById('settings-overlay').addEventListener('click', e => { if 
 
 // ══ GPS / MEDIA / CLOCK ══
 window.onGpsSpeed = kmh => { document.getElementById('speed-val').textContent = Math.round(kmh); };
+
 window.onMediaUpdate = track => {
-  const el = document.getElementById('np-track'), ind = document.getElementById('np-indicator');
+  const el  = document.getElementById('np-track');
+  const ind = document.getElementById('np-indicator');
   if (track) { el.textContent = track; ind.classList.remove('paused'); }
   else        { el.textContent = 'Nessuna riproduzione'; ind.classList.add('paused'); }
 };
+
+window.onPlaybackState = playing => {
+  const btn = document.getElementById('mc-play');
+  if (!btn) return;
+  btn.innerHTML = playing
+    ? `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5"/></svg>`
+    : `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg>`;
+};
+
+window.onAlbumArt = artData => {
+  const wrap = document.getElementById('album-art-wrap');
+  const img  = document.getElementById('album-art-img');
+  if (artData && artData.length > 10) {
+    img.src = artData;
+    wrap.classList.add('has-art');
+  } else {
+    wrap.classList.remove('has-art');
+    img.src = '';
+  }
+};
+
+// ══ MEDIA CONTROLS ══
+function mediaAction(action) {
+  try { Android.mediaAction(action); } catch(e) {}
+}
+
+// ══ VOLUME ══
+let volMax = 15;
+
+function initVolume() {
+  try {
+    const info = JSON.parse(Android.getVolumeInfo());
+    volMax = info.max;
+    document.getElementById('vol-slider').value = Math.round((info.current / info.max) * 100);
+  } catch(e) {}
+}
+
+function onVolumeSlider(pct) {
+  const level = Math.round((parseInt(pct) / 100) * volMax);
+  try { Android.setVolume(level); } catch(e) {}
+}
 function updateClock() {
   const now = new Date();
   const t = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
