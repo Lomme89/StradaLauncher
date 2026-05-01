@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #eceae5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clock {
+  width: 94vw;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Each digit/sep is a fixed-width inline-block so the grid never reflows */
+.time-row {
+  display: flex;
+  align-items: baseline;
+  /* widths set by JS once */
+}
+
+.digit-cell, .sep-cell {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 500;
+  color: #0a0a0a;
+  line-height: 1;
+  text-align: center;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.divider {
+  height: 2px;
+  background: #0a0a0a;
+  opacity: 0.15;
+  margin: 0.12em 0;
+}
+
+#row-date {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: #0a0a0a;
+  white-space: nowrap;
+  line-height: 1;
+  display: block;
+}
+</style>
+</head>
+<body>
+
+<div class="clock">
+  <div class="time-row" id="row-time">
+    <span class="digit-cell" id="d-h1">0</span>
+    <span class="digit-cell" id="d-h2">0</span>
+    <span class="sep-cell" id="sep1">:</span>
+    <span class="digit-cell" id="d-m1">0</span>
+    <span class="digit-cell" id="d-m2">0</span>
+    <span class="sep-cell" id="sep2">:</span>
+    <span class="digit-cell" id="d-s1">0</span>
+    <span class="digit-cell" id="d-s2">0</span>
+  </div>
+  <div class="divider"></div>
+  <div id="row-date"></div>
+</div>
+
+<script>
+const giorniIT = ['DOMENICA','LUNEDÌ','MARTEDÌ','MERCOLEDÌ','GIOVEDÌ','VENERDÌ','SABATO'];
+const mesiIT   = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO',
+                   'LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'];
+
+const rowTime = document.getElementById('row-time');
+const rowDate = document.getElementById('row-date');
+const dh1 = document.getElementById('d-h1');
+const dh2 = document.getElementById('d-h2');
+const dm1 = document.getElementById('d-m1');
+const dm2 = document.getElementById('d-m2');
+const ds1 = document.getElementById('d-s1');
+const ds2 = document.getElementById('d-s2');
+const allTimeCells = rowTime.querySelectorAll('.digit-cell, .sep-cell');
+
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function getDateStr(now){
+  return `${giorniIT[now.getDay()]} ${pad(now.getDate())} ${mesiIT[now.getMonth()]} ${now.getFullYear()}`;
+}
+
+/* Measure text width of a single character at a given font-size using canvas */
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+
+function charWidth(ch, fs) {
+  ctx.font = `500 ${fs}px Orbitron`;
+  return ctx.measureText(ch).width;
+}
+
+/* Binary-search font-size (px) so that the rendered text width == targetW.
+   Uses canvas — no DOM reflow, completely stable. */
+function findFontSize(text, targetW, letterSpacing = 0) {
+  let lo = 1, hi = 2000;
+  while (hi - lo > 0.25) {
+    const mid = (lo + hi) / 2;
+    ctx.font = `500 ${mid}px Orbitron`;
+    const w = ctx.measureText(text).width + letterSpacing * text.length;
+    if (w <= targetW) lo = mid; else hi = mid;
+  }
+  return lo;
+}
+
+/* Compute letter-spacing so text at `fs` fills exactly `targetW` */
+function findLetterSpacing(text, fs, targetW) {
+  ctx.font = `500 ${fs}px Orbitron`;
+  const natural = ctx.measureText(text).width;
+  return (targetW - natural) / text.length;
+}
+
+let sized = false;
+
+function doResize() {
+  sized = false;
+  const W = document.querySelector('.clock').offsetWidth;
+
+  /* --- TIME ROW ---
+     The time string is "HH:MM:SS" = 8 chars, but we lay it out as
+     8 equal digit cols + 2 narrow sep cols.
+     Strategy: find font-size so "00:00:00" (worst case, all same-width glyphs) fills W.
+     Then set each digit cell to 1/6 of the digit-total-width, sep cells to colon width. */
+
+  const timeStr = '00:00:00';
+  const fs = findFontSize(timeStr, W);
+
+  ctx.font = `500 ${fs}px Orbitron`;
+  const digitW  = ctx.measureText('0').width;
+  const colonW  = ctx.measureText(':').width;
+  // total = 6*digitW + 2*colonW — we want that == W, scale if needed
+  const naturalTotal = 6 * digitW + 2 * colonW;
+  const scale = W / naturalTotal;
+  const dw = digitW * scale;
+  const sw = colonW * scale;
+  const fsFinal = fs * scale;
+
+  allTimeCells.forEach(el => {
+    el.style.fontSize = fsFinal + 'px';
+  });
+  rowTime.querySelectorAll('.digit-cell').forEach(el => {
+    el.style.width = dw + 'px';
+  });
+  rowTime.querySelectorAll('.sep-cell').forEach(el => {
+    el.style.width = sw + 'px';
+  });
+
+  /* --- DATE ROW ---
+     Find font-size so the date string fills exactly W pixels. */
+  const now = new Date();
+  const dateStr = getDateStr(now);
+  rowDate.textContent = dateStr;
+
+  const fsDate = findFontSize(dateStr, W);
+  const ls = findLetterSpacing(dateStr, fsDate, W);
+  rowDate.style.fontSize = fsDate + 'px';
+  rowDate.style.letterSpacing = ls + 'px';
+
+  sized = true;
+}
+
+/* tick: ONLY update text, never touch font-size */
+function tick() {
+  if (!sized) return;
+  const now = new Date();
+  const h = pad(now.getHours()), m = pad(now.getMinutes()), s = pad(now.getSeconds());
+  dh1.textContent = h[0]; dh2.textContent = h[1];
+  dm1.textContent = m[0]; dm2.textContent = m[1];
+  ds1.textContent = s[0]; ds2.textContent = s[1];
+
+  const dateStr = getDateStr(now);
+  if (rowDate.textContent !== dateStr) {
+    rowDate.textContent = dateStr;
+    // date text changed (day/month rollover) — re-measure date row only
+    const W = document.querySelector('.clock').offsetWidth;
+    const fsDate = findFontSize(dateStr, W);
+    const ls = findLetterSpacing(dateStr, fsDate, W);
+    rowDate.style.fontSize = fsDate + 'px';
+    rowDate.style.letterSpacing = ls + 'px';
+  }
+}
+
+document.fonts.ready.then(() => {
+  doResize();
+  tick();
+  setInterval(tick, 1000);
+});
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(doResize, 60);
+});
+</script>
+</body>
+</html>

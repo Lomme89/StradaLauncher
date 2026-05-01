@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Car Launcher</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&family=Nunito:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&family=Nunito:wght@300;400;500&family=Orbitron:wght@500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -100,7 +100,8 @@ html, body {
   display: flex; align-items: center; justify-content: center;
   transition: border-color 0.13s, color 0.13s; flex-shrink: 0;
 }
-.settings-gear-btn:hover { border-color: var(--hover-border); color: var(--text); }
+.settings-gear-btn:hover  { border-color: var(--hover-border); color: var(--text); }
+.settings-gear-btn.active { background: var(--surface2); color: var(--text); border-color: var(--hover-border); }
 .settings-gear-btn svg { width: 2vmin; height: 2vmin; }
 
 /* ══ APPS AREA ══ */
@@ -273,13 +274,14 @@ html, body {
 .vol-wrap { display: flex; align-items: center; gap: 0.5vw; flex-shrink: 0; }
 .vol-icon { color: var(--muted); display: flex; align-items: center; flex-shrink: 0; }
 .vol-icon svg { width: clamp(12px, 2vh, 16px); height: clamp(12px, 2vh, 16px); }
-#vol-slider { width: clamp(55px, 7vw, 110px); accent-color: var(--c1); cursor: pointer; }
+#vol-slider { width: clamp(90px, 16vw, 260px); accent-color: var(--c1); cursor: pointer; }
 
 /* ══ SETTINGS MODAL ══ */
 .settings-modal { width: clamp(380px, 58vw, 720px); max-height: 88vh; }
 .settings-body  { overflow-y: auto; flex: 1; margin-bottom: 1.5vh; scrollbar-width: thin; scrollbar-color: var(--border) transparent; display: flex; flex-direction: column; gap: 2vh; padding-right: 4px; }
 .settings-label { font-size: clamp(8px, 1.1vh, 11px); color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8vh; font-family: var(--font-mono); }
 .settings-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2vw; }
+.settings-row-2 > * { min-width: 0; }
 
 /* theme chips grid */
 .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(5px, 0.8vw, 10px); }
@@ -313,8 +315,154 @@ html, body {
 .slider-row { display: flex; align-items: center; gap: 1vw; margin-bottom: 0.6vh; }
 .slider-row:last-child { margin-bottom: 0; }
 .slider-row label { font-size: clamp(10px, 1.4vh, 13px); color: var(--text); min-width: 11ch; flex-shrink: 0; }
-.slider-row input[type=range] { flex: 1; accent-color: var(--c1); cursor: pointer; }
+.slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--c1); cursor: pointer; }
 .slider-val { font-family: var(--font-mono); font-size: clamp(9px, 1.2vh, 11px); color: var(--muted); min-width: 4.5ch; text-align: right; flex-shrink: 0; }
+
+/* ══ SIDEBAR APPS BUTTON ══ */
+.sb-apps-btn {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: clamp(5px, 0.9vmin, 9px);
+  color: var(--muted); cursor: pointer;
+  width: clamp(22px, 3.6vmin, 32px); height: clamp(22px, 3.6vmin, 32px);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.13s, color 0.13s; flex-shrink: 0;
+  margin-bottom: 1vh; padding: 0;
+}
+.sb-apps-btn:hover  { border-color: var(--hover-border); color: var(--text); }
+.sb-apps-btn:active { transform: scale(0.92); }
+.sb-apps-btn svg { width: 2vmin; height: 2vmin; }
+
+/* ══ APP DRAWER ══ */
+.drawer-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 100;
+  display: flex; flex-direction: column;
+  opacity: 0; pointer-events: none; transition: opacity 0.18s;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: all; }
+.drawer-header {
+  display: flex; align-items: center; gap: 2vw;
+  padding: 1.5vh 3vw;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.drawer-title {
+  font-size: clamp(12px, 2vh, 18px); font-weight: 500;
+  color: var(--text); white-space: nowrap; flex-shrink: 0;
+}
+.drawer-search {
+  flex: 1; max-width: 32vw;
+  padding: clamp(6px, 1.1vh, 11px) clamp(10px, 1.4vw, 16px);
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: clamp(7px, 1vmin, 10px); color: var(--text);
+  font-family: var(--font-body); font-size: clamp(11px, 1.6vh, 14px);
+  outline: none; transition: border-color 0.13s;
+}
+.drawer-search:focus { border-color: var(--hover-border); }
+.drawer-close {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: clamp(6px, 1vmin, 10px); color: var(--muted);
+  font-family: var(--font-body); font-size: clamp(10px, 1.4vh, 13px);
+  padding: clamp(6px, 1vh, 10px) clamp(10px, 1.3vw, 18px);
+  cursor: pointer; flex-shrink: 0;
+  transition: border-color 0.13s, color 0.13s;
+}
+.drawer-close:hover { border-color: var(--hover-border); color: var(--text); }
+.drawer-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: clamp(6px, 1.2vmin, 14px);
+  padding: 2vh 3vw; overflow-y: auto; flex: 1;
+  align-content: start;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.drawer-app {
+  display: flex; flex-direction: column; align-items: center; gap: 0.7vh;
+  padding: clamp(8px, 1.5vh, 16px) clamp(4px, 0.8vw, 12px);
+  border-radius: clamp(8px, 1.4vmin, 14px);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background 0.13s; text-decoration: none;
+}
+.drawer-app:hover  { background: var(--surface2); }
+.drawer-app:active { transform: scale(0.93); }
+.drawer-app-icon {
+  width: clamp(38px, 7vmin, 60px); height: clamp(38px, 7vmin, 60px);
+  border-radius: clamp(8px, 1.4vmin, 14px);
+  flex-shrink: 0; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface);
+}
+.drawer-app-icon img { width: 100%; height: 100%; object-fit: cover; }
+.drawer-app-label {
+  font-size: clamp(8px, 1.2vh, 11px); color: var(--text);
+  text-align: center; line-height: 1.25;
+  width: 100%; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+.drawer-empty {
+  grid-column: 1 / -1; text-align: center;
+  color: var(--muted); font-size: clamp(11px, 1.8vh, 15px);
+  padding: 5vh 0;
+}
+
+/* ══ SIDEBAR MODE BUTTON ══ */
+.sb-mode-btn {
+  background: transparent; border: 1px solid transparent;
+  border-radius: clamp(5px, 0.9vmin, 9px);
+  color: var(--muted); cursor: pointer;
+  width: clamp(22px, 3.6vmin, 32px); height: clamp(22px, 3.6vmin, 32px);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.13s, color 0.13s; flex-shrink: 0;
+  margin-bottom: 1vh; padding: 0;
+}
+.sb-mode-btn:hover  { border-color: var(--hover-border); color: var(--text); }
+.sb-mode-btn:active { transform: scale(0.92); }
+.sb-mode-btn.clock-active { color: var(--c1); border-color: var(--c1); }
+.sb-mode-btn svg { width: 2vmin; height: 2vmin; }
+
+/* ══ CLOCK VIEW ══ */
+.clock-view {
+  display: none;
+  width: 100%; height: 100%;
+  align-items: center; justify-content: center;
+  padding: 1vh 2vw;
+}
+.clock-view.active { display: flex; }
+.cw-wrap {
+  width: min(82%, 110vh);
+  display: flex; flex-direction: column;
+}
+.cw-time-row {
+  display: flex; align-items: baseline;
+}
+.cw-digit, .cw-sep {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1;
+  text-align: center;
+  flex-shrink: 0;
+  display: inline-block;
+  transition: color 0.25s;
+}
+.cw-divider {
+  height: 2px;
+  background: var(--border);
+  margin: 0.12em 0;
+  transition: background 0.25s;
+}
+.cw-date {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  line-height: 1;
+  display: block;
+  transition: color 0.25s;
+}
 </style>
 </head>
 <body>
@@ -323,10 +471,15 @@ html, body {
 
 <div class="shell" id="shell">
   <nav class="sidebar">
-    <div class="sb-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M1.5 9C6 4.5 18 4.5 22.5 9M5.5 13c2.5-2.5 11-2.5 13.5 0M9.5 17c1-1 5-1 6 0M12 21h.01"/></svg></div>
-    <div class="sb-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M6.5 7L17 12L6.5 17M12 3.5V20.5L17 15.5L12 10.5"/></svg></div>
+    <button class="sb-apps-btn" onclick="openDrawer()" title="App installate">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"/>
+      </svg>
+    </button>
+    <button class="sb-mode-btn" id="sb-mode-btn" onclick="toggleClockMode()" title="Modalità orologio">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+    </button>
     <div class="sb-dots"><div class="sb-dot"></div><div class="sb-dot"></div><div class="sb-dot"></div></div>
-    <div class="sb-time" id="sb-time">00:00</div>
   </nav>
 
   <div class="main">
@@ -340,6 +493,9 @@ html, body {
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M9 6.75V15m6-6v8.25M3.75 7.5l16.5-4.125"/></svg>
           GPS
         </div>
+        <button class="settings-gear-btn" id="edit-btn" onclick="toggleEditMode()" title="Personalizza">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/></svg>
+        </button>
         <button class="settings-gear-btn" onclick="openSettingsModal()">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
         </button>
@@ -348,6 +504,22 @@ html, body {
 
     <div class="apps-area">
       <div class="apps-grid" id="apps-grid"></div>
+      <div class="clock-view" id="clock-view">
+        <div class="cw-wrap" id="cw-wrap">
+          <div class="cw-time-row" id="cw-time-row">
+            <span class="cw-digit" id="cw-h1">0</span>
+            <span class="cw-digit" id="cw-h2">0</span>
+            <span class="cw-sep"   id="cw-sep1">:</span>
+            <span class="cw-digit" id="cw-m1">0</span>
+            <span class="cw-digit" id="cw-m2">0</span>
+            <span class="cw-sep"   id="cw-sep2">:</span>
+            <span class="cw-digit" id="cw-s1">0</span>
+            <span class="cw-digit" id="cw-s2">0</span>
+          </div>
+          <div class="cw-divider"></div>
+          <div class="cw-date" id="cw-date"></div>
+        </div>
+      </div>
     </div>
 
     <div class="bottombar">
@@ -388,12 +560,11 @@ html, body {
 
       <div class="sep"></div>
 
-      <!-- speed + edit -->
+      <!-- speed -->
       <div class="speed-wrap">
         <div class="speed-val" id="speed-val">0</div>
         <div class="speed-unit">km/h</div>
       </div>
-      <button class="edit-btn" id="edit-btn" onclick="toggleEditMode()">✎ Personalizza</button>
 
     </div>
   </div>
@@ -421,6 +592,16 @@ html, body {
     <div class="modal-list" id="launch-list"></div>
     <button class="modal-close" onclick="closeLaunch()">Chiudi</button>
   </div>
+</div>
+
+<!-- APP DRAWER -->
+<div class="drawer-overlay" id="drawer-overlay">
+  <div class="drawer-header">
+    <div class="drawer-title">App installate</div>
+    <input class="drawer-search" id="drawer-search" type="text" placeholder="Cerca app…" oninput="filterDrawer(this.value)">
+    <button class="drawer-close" onclick="closeDrawer()">✕ Chiudi</button>
+  </div>
+  <div class="drawer-grid" id="drawer-grid"></div>
 </div>
 
 <!-- SETTINGS MODAL -->
@@ -717,9 +898,7 @@ function closeLaunch() { document.getElementById('launch-overlay').classList.rem
 function toggleEditMode() {
   editMode = !editMode;
   document.getElementById('shell').classList.toggle('edit-mode', editMode);
-  const btn = document.getElementById('edit-btn');
-  btn.textContent = editMode ? '✓ Fine' : '✎ Personalizza';
-  btn.classList.toggle('active', editMode);
+  document.getElementById('edit-btn').classList.toggle('active', editMode);
 }
 
 // ══ PICKER ══
@@ -825,7 +1004,6 @@ function updateClock() {
   const now = new Date();
   const t = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
   document.getElementById('clock').textContent = t;
-  document.getElementById('sb-time').textContent = t;
   const days   = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
   const months = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
   document.getElementById('date-str').textContent = days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()];
@@ -976,6 +1154,41 @@ function onBrightnessLight(v) {
   if (!resolveIsDark(settings.theme)) applyBrightness(settings.brightnessLight);
 }
 
+// ══ APP DRAWER ══
+function openDrawer() {
+  document.getElementById('drawer-search').value = '';
+  renderDrawer('');
+  document.getElementById('drawer-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('drawer-search').focus(), 120);
+}
+
+function closeDrawer() {
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+function filterDrawer(q) {
+  renderDrawer(q.toLowerCase());
+}
+
+function renderDrawer(q) {
+  const grid = document.getElementById('drawer-grid');
+  grid.innerHTML = '';
+  const filtered = installedApps.filter(a => !q || a.label.toLowerCase().includes(q));
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="drawer-empty">Nessuna app trovata</div>';
+    return;
+  }
+  filtered.forEach(app => {
+    const el = document.createElement('div');
+    el.className = 'drawer-app';
+    el.innerHTML = `
+      <div class="drawer-app-icon">${app.icon ? `<img src="${app.icon}" alt="">` : ''}</div>
+      <div class="drawer-app-label">${app.label}</div>`;
+    el.onclick = () => { closeDrawer(); launchPkg(app.packageName); };
+    grid.appendChild(el);
+  });
+}
+
 // ══ SETTINGS MODAL ══
 function openSettingsModal() {
   // sync all controls to current settings
@@ -1002,6 +1215,121 @@ function openSettingsModal() {
 function closeSettingsModal() {
   saveSettingsToDevice();
   document.getElementById('settings-overlay').classList.remove('open');
+}
+
+// ══ CLOCK VIEW ══
+let clockMode = false;
+let cwSized = false;
+let cwTickInterval = null;
+let cwResizeTimer = null;
+
+const _cwCanvas = document.createElement('canvas');
+const _cwCtx = _cwCanvas.getContext('2d');
+
+function _cwFindFontSize(text, targetW) {
+  let lo = 1, hi = 2000;
+  while (hi - lo > 0.25) {
+    const mid = (lo + hi) / 2;
+    _cwCtx.font = `500 ${mid}px Orbitron`;
+    if (_cwCtx.measureText(text).width <= targetW) lo = mid; else hi = mid;
+  }
+  return lo;
+}
+
+function _cwFindLetterSpacing(text, fs, targetW) {
+  _cwCtx.font = `500 ${fs}px Orbitron`;
+  return (targetW - _cwCtx.measureText(text).width) / text.length;
+}
+
+const _CW_GIORNI = ['DOMENICA','LUNEDÌ','MARTEDÌ','MERCOLEDÌ','GIOVEDÌ','VENERDÌ','SABATO'];
+const _CW_MESI   = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'];
+
+function _cwDateStr(now) {
+  return `${_CW_GIORNI[now.getDay()]} ${String(now.getDate()).padStart(2,'0')} ${_CW_MESI[now.getMonth()]} ${now.getFullYear()}`;
+}
+
+function cwDoResize() {
+  cwSized = false;
+  const wrap = document.getElementById('cw-wrap');
+  if (!wrap || !document.getElementById('clock-view').classList.contains('active')) return;
+  const W = wrap.offsetWidth;
+  if (!W) return;
+
+  const fs = _cwFindFontSize('00:00:00', W);
+  _cwCtx.font = `500 ${fs}px Orbitron`;
+  const digitW = _cwCtx.measureText('0').width;
+  const colonW = _cwCtx.measureText(':').width;
+  const scale  = W / (6 * digitW + 2 * colonW);
+  const dw = digitW * scale, sw = colonW * scale, fsFinal = fs * scale;
+
+  document.querySelectorAll('.cw-digit, .cw-sep').forEach(el => { el.style.fontSize = fsFinal + 'px'; });
+  document.querySelectorAll('.cw-digit').forEach(el => { el.style.width = dw + 'px'; });
+  document.querySelectorAll('.cw-sep').forEach(el => { el.style.width = sw + 'px'; });
+
+  const dateEl = document.getElementById('cw-date');
+  const dateStr = _cwDateStr(new Date());
+  dateEl.textContent = dateStr;
+  const fsDate = _cwFindFontSize(dateStr, W);
+  dateEl.style.fontSize = fsDate + 'px';
+  dateEl.style.letterSpacing = _cwFindLetterSpacing(dateStr, fsDate, W) + 'px';
+
+  cwSized = true;
+}
+
+function cwTick() {
+  if (!cwSized) return;
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('cw-h1').textContent = h[0];
+  document.getElementById('cw-h2').textContent = h[1];
+  document.getElementById('cw-m1').textContent = m[0];
+  document.getElementById('cw-m2').textContent = m[1];
+  document.getElementById('cw-s1').textContent = s[0];
+  document.getElementById('cw-s2').textContent = s[1];
+
+  const dateEl = document.getElementById('cw-date');
+  const dateStr = _cwDateStr(now);
+  if (dateEl.textContent !== dateStr) {
+    dateEl.textContent = dateStr;
+    const W = document.getElementById('cw-wrap').offsetWidth;
+    const fsDate = _cwFindFontSize(dateStr, W);
+    dateEl.style.fontSize = fsDate + 'px';
+    dateEl.style.letterSpacing = _cwFindLetterSpacing(dateStr, fsDate, W) + 'px';
+  }
+}
+
+function toggleClockMode() {
+  clockMode = !clockMode;
+  const grid      = document.getElementById('apps-grid');
+  const clockView = document.getElementById('clock-view');
+  const btn       = document.getElementById('sb-mode-btn');
+
+  if (clockMode) {
+    grid.style.display = 'none';
+    clockView.classList.add('active');
+    btn.classList.add('clock-active');
+    btn.title = 'Torna ai pulsanti';
+    btn.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"/></svg>`;
+    document.fonts.ready.then(() => { cwDoResize(); cwTick(); });
+    cwTickInterval = setInterval(cwTick, 1000);
+    window.addEventListener('resize', _cwResizeHandler);
+  } else {
+    grid.style.display = '';
+    clockView.classList.remove('active');
+    btn.classList.remove('clock-active');
+    btn.title = 'Modalità orologio';
+    btn.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>`;
+    clearInterval(cwTickInterval);
+    window.removeEventListener('resize', _cwResizeHandler);
+    cwSized = false;
+  }
+}
+
+function _cwResizeHandler() {
+  clearTimeout(cwResizeTimer);
+  cwResizeTimer = setTimeout(cwDoResize, 60);
 }
 </script>
 </body>
