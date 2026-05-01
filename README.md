@@ -1,6 +1,11 @@
 # StradaLauncher
 
-Launcher Android per autoradio/headunit, pensato per schermi landscape 1280x720.
+<p align="center">
+  <img src="stradaicon.png" alt="StradaLauncher" width="180">
+</p>
+
+Launcher Android per autoradio/headunit. Nasce con in mente i display landscape 1280x720, tipici di molte autoradio, ma l'interfaccia e' responsive e si adatta anche ad altre risoluzioni.
+
 La UI e' una dashboard HTML/CSS/JS caricata dentro una WebView nativa Android, con bridge Java per app installate, GPS, media session, volume e luminosita'.
 
 ## Anteprima
@@ -45,22 +50,43 @@ app/src/main/
     activity_main.xml          # WebView fullscreen
 ```
 
-## Setup
+## Installazione APK
+
+Per installarlo su una headunit, il metodo piu' semplice e' generare un APK e copiarlo sulla radio con chiavetta USB, microSD, download dal browser o file manager.
+
+### Generare l'APK con Android Studio
 
 1. Apri la cartella del progetto in Android Studio.
 2. Attendi il sync Gradle.
-3. Collega la headunit o un device Android con Debug USB attivo.
-4. Avvia l'app da Android Studio oppure compila da terminale:
+3. Vai su **Build -> Build Bundle(s) / APK(s) -> Build APK(s)**.
+4. A build finita, Android Studio mostra il link **locate** per aprire la cartella dell'APK.
+
+Percorso tipico dell'APK debug:
+
+```text
+app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Generare l'APK da terminale
+
+Da root progetto:
 
 ```bash
 ./gradlew assembleDebug
 ```
 
-APK debug:
+Il file generato si trova qui:
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 ```
+
+### Installare sulla headunit
+
+1. Copia `app-debug.apk` sulla headunit.
+2. Aprilo dal file manager della radio.
+3. Se Android lo chiede, abilita **Installa app sconosciute** per il file manager o browser usato.
+4. Completa l'installazione.
 
 ## Primo avvio
 
