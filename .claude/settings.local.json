@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"D:\\\\Download\\\\CarLauncher\\\\CarLauncher\" ; Get-ChildItem -Recurse -File | Where-Object { $_.Extension -in '.java','.xml','.html','.gradle' } | Select-Object FullName | Format-Table -HideTableHeaders)",
+      "Bash(cymbal show *)",
+      "Bash(cymbal index *)",
+      "Bash(cymbal structure *)",
+      "Bash(cymbal outline *)",
+      "Bash(cymbal search *)",
+      "Bash(cymbal ls *)"
+    ]
+  }
+}

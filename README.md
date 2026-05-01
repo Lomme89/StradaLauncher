@@ -1,101 +1,137 @@
-# StradaLauncher — Launcher per Headunit Android
+# StradaLauncher
 
-Launcher web-based per autoradio Android, ottimizzato per schermi 1280×720.
-Wrappa un HTML/CSS/JS in una WebView nativa con bridge Java↔JavaScript.
+Launcher Android per autoradio/headunit, pensato per schermi landscape 1280x720.
+La UI e' una dashboard HTML/CSS/JS caricata dentro una WebView nativa Android, con bridge Java per app installate, GPS, media session, volume e luminosita'.
 
----
+## Anteprima
 
-## Struttura del progetto
+Modalita' scura:
 
+![Interfaccia in modalita' scura](docs/screendark.png)
+
+Modalita' chiara:
+
+![Interfaccia in modalita' chiara](docs/screenlight.png)
+
+## Cosa fa
+
+- Griglia principale 3x2 con scorciatoie grandi per navigazione, musica, telefono, radio, Android Auto e impostazioni.
+- Drawer con tutte le app installate e ricerca rapida.
+- Personalizzazione degli slot: app singola, gruppo di app, etichetta/sottotitolo e intent Android custom.
+- Barra media con titolo corrente, copertina album, play/pausa, traccia precedente/successiva e volume.
+- Velocita' GPS in km/h aggiornata dal servizio Android.
+- Modalita' orologio fullscreen per usare lo schermo come clock da auto.
+- Temi dark/light, palette multiple, font, stile icone, stile schede e scala testo/icone.
+- Luminosita' via hardware Android oppure filtro software.
+- Persistenza impostazioni con `SharedPreferences`.
+
+## Stack
+
+- Java/Kotlin Android project tradizionale, senza framework frontend.
+- `WebView` fullscreen come shell nativa.
+- UI single-file in `app/src/main/assets/launcher.html`.
+- `NotificationListenerService` per leggere lo stato media dalle media session Android.
+
+## Struttura progetto
+
+```text
+app/src/main/
+  assets/
+    launcher.html              # UI completa: HTML, CSS e JavaScript
+  java/com/stradalauncher/
+    MainActivity.java          # WebView host, bridge JS, GPS, volume, media polling
+    MediaListenerService.java  # NotificationListenerService per media session
+  res/layout/
+    activity_main.xml          # WebView fullscreen
 ```
-StradaLauncher/
-├── app/
-│   ├── build.gradle
-│   └── src/main/
-│       ├── AndroidManifest.xml           ← taggato HOME launcher
-│       ├── assets/
-│       │   └── launcher.html             ← tutta la UI (modifica qui)
-│       ├── java/com/stradalauncher/
-│       │   ├── MainActivity.java         ← WebView + bridge GPS/Media/Apps
-│       │   └── MediaListenerService.java ← accesso MediaSession
-│       └── res/
-│           ├── layout/activity_main.xml
-│           └── values/{strings,themes}.xml
-├── build.gradle
-└── settings.gradle
+
+## Setup
+
+1. Apri la cartella del progetto in Android Studio.
+2. Attendi il sync Gradle.
+3. Collega la headunit o un device Android con Debug USB attivo.
+4. Avvia l'app da Android Studio oppure compila da terminale:
+
+```bash
+./gradlew assembleDebug
 ```
 
----
+APK debug:
 
-## Come aprire in Android Studio
-
-1. Apri Android Studio → **Open** → seleziona la cartella `StradaLauncher/`
-2. Attendi il sync Gradle (scarica le dipendenze automaticamente)
-3. Collega la headunit via USB (abilita Modalità Sviluppatore + Debug USB)
-4. Premi **Run ▶** — l'app viene installata
-
----
-
-## Primo avvio sulla headunit
-
-### 1. Imposta come launcher predefinito
-Premi il tasto Home fisico → comparirà "Seleziona launcher" → scegli **Strada Launcher** → "Sempre"
-
-### 2. Abilita accesso notifiche (per i metadati musicali)
+```text
+app/build/outputs/apk/debug/app-debug.apk
 ```
-Impostazioni Android → App → Accesso speciale → Accesso alle notifiche → Strada Launcher ✓
+
+## Primo avvio
+
+### Launcher predefinito
+
+Premi Home sul dispositivo Android, scegli **Strada Launcher** e conferma **Sempre**.
+
+### Accesso notifiche
+
+Serve per leggere titolo, artista, stato play/pausa e copertina dai player musicali:
+
+```text
+Impostazioni Android -> App -> Accesso speciale -> Accesso alle notifiche -> Strada Launcher
 ```
-Senza questo step la velocità GPS e i pulsanti funzionano, ma il "In riproduzione" non mostra titolo/artista.
 
-### 3. Permesso posizione (GPS velocità)
-Al primo avvio apparirà un popup → concedi **"Sempre"** per la velocità GPS.
+### Posizione
 
----
+Concedi il permesso posizione per mostrare la velocita' GPS e per la modalita' tema Alba/Tramonto.
 
-## Personalizzazione pulsanti
+## Personalizzazione
 
-Nell'interfaccia: tocca **✎ Personalizza** in basso a destra.
-Sui pulsanti appare il badge **✎** — toccalo per:
-- Assegnare qualsiasi app installata (con icona)
-- Svuotare il pulsante
+Tocca **Edit** nella barra in basso per entrare in modalita' modifica.
+Da li puoi assegnare app agli slot, cambiare testo, svuotare un pulsante o configurare intent Android custom.
 
-La configurazione viene salvata in `SharedPreferences` e persiste ai riavvii.
+Le impostazioni dell'interfaccia sono nel pannello con icona ingranaggio:
 
----
+- tema manuale, sistema o alba/tramonto;
+- palette colore;
+- font e stile icone;
+- schede monocromo, tinte o vivaci;
+- scala testo e icone;
+- luminosita' hardware/software.
 
-## Modifica UI
+## Bridge JavaScript
 
-Tutto il layout, i colori e le animazioni sono in:
-```
-app/src/main/assets/launcher.html
-```
-Puoi modificarlo con qualsiasi editor di testo e ricompilare.
-
----
-
-## Bridge Java ↔ JavaScript
-
-Oggetto `Android` disponibile in JS:
+Oggetto disponibile nella WebView: `Android`.
 
 | Metodo | Descrizione |
-|--------|-------------|
-| `Android.getInstalledApps()` | JSON array app installate (label, packageName, icon base64) |
-| `Android.launchApp(pkg)` | Lancia app per packageName |
-| `Android.openSettings(type)` | Apre impostazioni (`""`, `"display"`, `"sound"`, `"wifi"`, `"bt"`) |
-| `Android.saveButtonConfig(json)` | Salva config pulsanti in SharedPreferences |
-| `Android.loadButtonConfig()` | Legge config salvata |
+| --- | --- |
+| `Android.getInstalledApps()` | Ritorna JSON con app installate, package name e icona base64. |
+| `Android.launchApp(pkg)` | Apre un'app dal package name. |
+| `Android.launchIntent(json)` | Lancia un intent Android custom configurato dalla UI. |
+| `Android.openSettings(type)` | Apre impostazioni Android generiche, display, audio, Wi-Fi o Bluetooth. |
+| `Android.saveButtonConfig(json)` / `Android.loadButtonConfig()` | Salva/carica configurazione slot. |
+| `Android.saveSettings(json)` / `Android.loadSettings()` | Salva/carica preferenze UI. |
+| `Android.mediaAction(action)` | Invia play/pausa, avanti, indietro alle media session. |
+| `Android.getVolumeInfo()` / `Android.setVolume(level)` | Legge e imposta volume musica. |
+| `Android.setScreenBrightness(value)` | Regola luminosita' finestra Android. |
 
-Callback Java → JS (chiamate da MainActivity):
+Callback chiamate da Java verso JS:
 
-| Funzione globale JS | Quando viene chiamata |
-|--------------------|-----------------------|
-| `window.onGpsSpeed(kmh)` | Ogni aggiornamento GPS (ogni ~1s in movimento) |
-| `window.onMediaUpdate(track)` | Cambio traccia o pausa/play |
+| Callback | Descrizione |
+| --- | --- |
+| `window.onGpsSpeed(kmh)` | Aggiorna velocita' GPS. |
+| `window.onMediaUpdate(track)` | Aggiorna testo traccia. |
+| `window.onPlaybackState(playing)` | Aggiorna stato play/pausa. |
+| `window.onAlbumArt(dataUrl)` | Aggiorna copertina album. |
 
----
+## Sviluppo UI
+
+La UI sta quasi tutta qui:
+
+```text
+app/src/main/assets/launcher.html
+```
+
+Dopo modifiche agli asset serve ricompilare e reinstallare l'APK: non basta pushare il file sulla headunit.
 
 ## Requisiti
 
-- Android Studio Hedgehog (2023.1) o successivo
-- Android SDK 26+ (Android 8.0) sulla headunit
-- JDK 8+
+- Android Studio recente.
+- Android SDK 26+.
+- JDK compatibile con Gradle Android plugin del progetto.
+- Headunit o device Android landscape consigliato 1280x720.
