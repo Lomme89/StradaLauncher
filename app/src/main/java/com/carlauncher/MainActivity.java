@@ -24,7 +24,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
+import android.content.res.Configuration;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -91,12 +93,35 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Fullscreen anche al resume (es. dopo aver aperto un'app)
         getWindow().getDecorView().setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_FULLSCREEN |
             View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         );
+        reapplyBrightnessFromSettings();
+    }
+
+    private void reapplyBrightnessFromSettings() {
+        try {
+            String json = prefs.getString("app_settings", "");
+            if (json == null || json.length() <= 2) return;
+            JSONObject s = new JSONObject(json);
+            String theme = s.optString("theme", "dark");
+            boolean isDark;
+            if ("auto".equals(theme)) {
+                isDark = (getResources().getConfiguration().uiMode &
+                    Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+            } else {
+                isDark = !"light".equals(theme);
+            }
+            float brightness = (float) s.optDouble(isDark ? "brightnessDark" : "brightnessLight",
+                                                    isDark ? 0.5 : 0.9);
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.screenBrightness = Math.max(0.01f, Math.min(1.0f, brightness));
+            getWindow().setAttributes(lp);
+        } catch (Exception e) {
+            Log.e(TAG, "reapplyBrightness error", e);
+        }
     }
 
     // ─── WEBVIEW SETUP ───────────────────────────────────────────────────────
@@ -200,9 +225,25 @@ public class MainActivity extends AppCompatActivity {
             return prefs.getString("button_config", "");
         }
 
-        /**
-         * Apre le impostazioni di sistema Android.
-         */
+        @JavascriptInterface
+        public void saveSettings(String json) {
+            prefs.edit().putString("app_settings", json).apply();
+        }
+
+        @JavascriptInterface
+        public String loadSettings() {
+            return prefs.getString("app_settings", "");
+        }
+
+        @JavascriptInterface
+        public void setScreenBrightness(float brightness) {
+            runOnUiThread(() -> {
+                WindowManager.LayoutParams lp = getWindow().getAttributes();
+                lp.screenBrightness = Math.max(0.01f, Math.min(1.0f, brightness));
+                getWindow().setAttributes(lp);
+            });
+        }
+
         @JavascriptInterface
         public void openSettings(String type) {
             String action;

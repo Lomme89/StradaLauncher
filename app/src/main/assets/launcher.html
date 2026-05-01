@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -21,7 +21,26 @@
   --c4: #fbbf24;
   --c5: #4ade80;
   --c6: #f472b6;
+  --ts: 1;
+  --is: 1;
 }
+
+[data-theme="light"] {
+  --bg:       #e4e5ec;
+  --surface:  #f0f1f7;
+  --surface2: #ffffff;
+  --border:   rgba(0,0,0,0.09);
+  --text:     #1a1b25;
+  --muted:    #7a7a8a;
+}
+[data-theme="light"] .app-card:hover   { background: var(--surface2); border-color: rgba(0,0,0,0.14); }
+[data-theme="light"] .edit-btn:hover   { border-color: rgba(0,0,0,0.2); }
+[data-theme="light"] .modal-row:hover  { border-color: rgba(0,0,0,0.16); }
+[data-theme="light"] .modal-close:hover,
+[data-theme="light"] .edit-act-btn:hover { border-color: rgba(0,0,0,0.18); color: var(--text); }
+[data-theme="light"] .picker-search:focus { border-color: rgba(0,0,0,0.2); }
+[data-theme="light"] .theme-btn:hover  { border-color: rgba(0,0,0,0.2); }
+[data-theme="light"] .settings-gear-btn:hover { border-color: rgba(0,0,0,0.2); color: var(--text); }
 
 html, body {
   width: 100%; height: 100%;
@@ -32,6 +51,7 @@ html, body {
   font-weight: 300;
   -webkit-user-select: none;
   user-select: none;
+  transition: background 0.25s, color 0.25s;
 }
 
 /* ══ LAYOUT ══ */
@@ -50,6 +70,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   padding: 2vh 0 1.5vh;
+  transition: background 0.25s, border-color 0.25s;
 }
 
 .sb-icon {
@@ -92,20 +113,21 @@ html, body {
 
 .clock {
   font-family: 'DM Mono', monospace;
-  font-size: clamp(16px, 3.5vh, 32px);
+  font-size: calc(clamp(16px, 3.5vh, 32px) * var(--ts));
   font-weight: 300;
   color: #fff;
   letter-spacing: -0.02em;
   line-height: 1;
 }
+[data-theme="light"] .clock { color: var(--text); }
 
 .date-str {
-  font-size: clamp(9px, 1.5vh, 14px);
+  font-size: calc(clamp(9px, 1.5vh, 14px) * var(--ts));
   color: var(--muted);
   margin-left: 1.2vw;
 }
 
-.topbar-right { display: flex; align-items: center; gap: 2vw; }
+.topbar-right { display: flex; align-items: center; gap: 1.5vw; }
 
 .status-pill {
   display: flex; align-items: center; gap: 0.5vw;
@@ -114,6 +136,21 @@ html, body {
   font-family: 'DM Mono', monospace;
 }
 .status-pill svg { width: 1.8vmin; height: 1.8vmin; }
+
+.settings-gear-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: clamp(6px, 1vmin, 10px);
+  color: var(--muted);
+  cursor: pointer;
+  width: clamp(28px, 4.5vh, 40px);
+  height: clamp(28px, 4.5vh, 40px);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.13s, color 0.13s;
+  flex-shrink: 0;
+}
+.settings-gear-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+.settings-gear-btn svg { width: 2vmin; height: 2vmin; }
 
 /* ══ APPS AREA ══ */
 .apps-area {
@@ -161,20 +198,21 @@ html, body {
 .app-card:hover .glow { opacity: 0.08; }
 
 .app-icon {
-  width: clamp(32px, 5vmin, 56px);
-  height: clamp(32px, 5vmin, 56px);
+  width: calc(clamp(32px, 5vmin, 56px) * var(--is));
+  height: calc(clamp(32px, 5vmin, 56px) * var(--is));
   border-radius: clamp(6px, 1.2vmin, 14px);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   background: rgba(255,255,255,0.04);
+  transition: width 0.2s, height 0.2s;
 }
-.app-icon svg { width: clamp(18px, 2.8vmin, 28px); height: clamp(18px, 2.8vmin, 28px); }
-.app-icon img { width: clamp(20px, 3vmin, 32px); height: clamp(20px, 3vmin, 32px); object-fit: contain; border-radius: 6px; }
+.app-icon svg { width: calc(clamp(18px, 2.8vmin, 28px) * var(--is)); height: calc(clamp(18px, 2.8vmin, 28px) * var(--is)); }
+.app-icon img { width: calc(clamp(20px, 3vmin, 32px) * var(--is)); height: calc(clamp(20px, 3vmin, 32px) * var(--is)); object-fit: contain; border-radius: 6px; }
 
 .app-info { flex: 1; min-width: 0; }
 
 .app-name {
-  font-size: clamp(10px, 1.8vh, 16px);
+  font-size: calc(clamp(10px, 1.8vh, 16px) * var(--ts));
   font-weight: 500;
   color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -182,7 +220,7 @@ html, body {
 }
 
 .app-sub {
-  font-size: clamp(8px, 1.3vh, 12px);
+  font-size: calc(clamp(8px, 1.3vh, 12px) * var(--ts));
   color: var(--muted);
   margin-top: 0.3vh;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -251,6 +289,7 @@ html, body {
   min-width: clamp(36px, 5vw, 60px);
   text-align: right;
 }
+[data-theme="light"] .speed-val { color: var(--text); }
 .speed-unit { font-size: clamp(8px, 1.2vh, 11px); color: var(--muted); font-family: 'DM Mono', monospace; }
 
 .edit-btn {
@@ -357,6 +396,75 @@ html, body {
 }
 .edit-act-btn:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
 .edit-act-btn.danger:hover { border-color: #f87171; color: #f87171; }
+
+/* ══ SETTINGS MODAL ══ */
+.settings-modal {
+  width: clamp(320px, 48vw, 580px);
+  max-height: 85vh;
+}
+
+.settings-body {
+  overflow-y: auto; flex: 1;
+  margin-bottom: 1.5vh;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  display: flex; flex-direction: column; gap: 2.5vh;
+}
+
+.settings-section {}
+
+.settings-label {
+  font-size: clamp(8px, 1.2vh, 11px);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1vh;
+  font-family: 'DM Mono', monospace;
+}
+
+.theme-btns { display: flex; gap: 0.6vw; }
+
+.theme-btn {
+  flex: 1;
+  padding: clamp(7px, 1.3vh, 12px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: clamp(6px, 1vmin, 9px);
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(9px, 1.4vh, 13px);
+  cursor: pointer;
+  transition: border-color 0.13s, color 0.13s, background 0.13s;
+  text-align: center;
+}
+.theme-btn:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
+.theme-btn.active { border-color: var(--c1); color: var(--c1); background: rgba(126,184,247,0.08); }
+
+.slider-row {
+  display: flex; align-items: center; gap: 1.2vw;
+  margin-bottom: 0.8vh;
+}
+.slider-row:last-child { margin-bottom: 0; }
+.slider-row label {
+  font-size: clamp(10px, 1.5vh, 13px);
+  color: var(--text);
+  min-width: 14ch;
+  flex-shrink: 0;
+}
+.slider-row input[type=range] {
+  flex: 1;
+  accent-color: var(--c1);
+  height: clamp(3px, 0.5vh, 5px);
+  cursor: pointer;
+}
+.slider-val {
+  font-family: 'DM Mono', monospace;
+  font-size: clamp(9px, 1.3vh, 12px);
+  color: var(--muted);
+  min-width: 4.5ch;
+  text-align: right;
+  flex-shrink: 0;
+}
 </style>
 </head>
 <body>
@@ -397,6 +505,11 @@ html, body {
           </svg>
           GPS
         </div>
+        <button class="settings-gear-btn" onclick="openSettingsModal()" title="Impostazioni Launcher">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -450,6 +563,69 @@ html, body {
   </div>
 </div>
 
+<!-- SETTINGS MODAL -->
+<div class="overlay" id="settings-overlay">
+  <div class="modal settings-modal">
+    <div class="modal-title">Impostazioni Launcher</div>
+    <div class="modal-sub">Personalizza aspetto e display.</div>
+
+    <div class="settings-body">
+
+      <!-- TEMA -->
+      <div class="settings-section">
+        <div class="settings-label">Tema</div>
+        <div class="theme-btns">
+          <button class="theme-btn" data-theme="dark"  onclick="setTheme('dark')">🌑 Scuro</button>
+          <button class="theme-btn" data-theme="light" onclick="setTheme('light')">☀️ Chiaro</button>
+          <button class="theme-btn" data-theme="auto"  onclick="setTheme('auto')">⚙️ Automatico</button>
+        </div>
+      </div>
+
+      <!-- SCALA TESTO -->
+      <div class="settings-section">
+        <div class="settings-label">Scala testo</div>
+        <div class="slider-row">
+          <label>Dimensione</label>
+          <input type="range" id="ts-slider" min="0.7" max="1.5" step="0.05" value="1.0"
+                 oninput="onTextScale(this.value)">
+          <span class="slider-val" id="ts-val">1.0×</span>
+        </div>
+      </div>
+
+      <!-- SCALA ICONE -->
+      <div class="settings-section">
+        <div class="settings-label">Scala icone</div>
+        <div class="slider-row">
+          <label>Dimensione</label>
+          <input type="range" id="is-slider" min="0.6" max="1.6" step="0.05" value="1.0"
+                 oninput="onIconScale(this.value)">
+          <span class="slider-val" id="is-val">1.0×</span>
+        </div>
+      </div>
+
+      <!-- LUMINOSITÀ -->
+      <div class="settings-section">
+        <div class="settings-label">Luminosità display</div>
+        <div class="slider-row">
+          <label>Tema scuro</label>
+          <input type="range" id="bd-slider" min="10" max="100" step="5" value="50"
+                 oninput="onBrightnessDark(this.value)">
+          <span class="slider-val" id="bd-val">50%</span>
+        </div>
+        <div class="slider-row">
+          <label>Tema chiaro</label>
+          <input type="range" id="bl-slider" min="10" max="100" step="5" value="90"
+                 oninput="onBrightnessLight(this.value)">
+          <span class="slider-val" id="bl-val">90%</span>
+        </div>
+      </div>
+
+    </div>
+
+    <button class="modal-close" onclick="closeSettingsModal()">Chiudi</button>
+  </div>
+</div>
+
 <script>
 // ══ DEFAULT BUTTONS ══
 const DEFAULT_BUTTONS = [
@@ -474,6 +650,7 @@ let pickerSlotIndex = -1;
 
 window.addEventListener('DOMContentLoaded', () => {
   loadConfig();
+  loadSettings();
   renderGrid();
   updateClock();
   setInterval(updateClock, 10000);
@@ -626,6 +803,7 @@ function clearSlot() {
 
 document.getElementById('picker-overlay').addEventListener('click', e => { if (e.target === document.getElementById('picker-overlay')) closePicker(); });
 document.getElementById('launch-overlay').addEventListener('click', e => { if (e.target === document.getElementById('launch-overlay')) closeLaunch(); });
+document.getElementById('settings-overlay').addEventListener('click', e => { if (e.target === document.getElementById('settings-overlay')) closeSettingsModal(); });
 
 // ══ GPS ══
 window.onGpsSpeed = kmh => { document.getElementById('speed-val').textContent = Math.round(kmh); };
@@ -647,6 +825,125 @@ function updateClock() {
   const days   = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
   const months = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
   document.getElementById('date-str').textContent = days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()];
+}
+
+// ══ SETTINGS ══
+const SETTINGS_DEFAULTS = {
+  theme: 'dark',
+  textScale: 1.0,
+  iconScale: 1.0,
+  brightnessDark: 0.5,
+  brightnessLight: 0.9
+};
+let settings = { ...SETTINGS_DEFAULTS };
+let autoThemeMq = null;
+
+function loadSettings() {
+  try {
+    const saved = Android.loadSettings();
+    if (saved && saved.length > 2) {
+      settings = { ...SETTINGS_DEFAULTS, ...JSON.parse(saved) };
+    }
+  } catch(e) {}
+  applyAllSettings();
+  if (settings.theme === 'auto') setupAutoThemeListener();
+}
+
+function saveSettingsToDevice() {
+  try { Android.saveSettings(JSON.stringify(settings)); } catch(e) {}
+}
+
+function applyAllSettings() {
+  applyThemeInternal(settings.theme);
+  document.documentElement.style.setProperty('--ts', settings.textScale);
+  document.documentElement.style.setProperty('--is', settings.iconScale);
+}
+
+function applyThemeInternal(theme) {
+  let isDark;
+  if (theme === 'auto') {
+    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } else {
+    isDark = theme === 'dark';
+  }
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  const brightness = isDark ? settings.brightnessDark : settings.brightnessLight;
+  try { Android.setScreenBrightness(brightness); } catch(e) {}
+}
+
+function setupAutoThemeListener() {
+  if (autoThemeMq) return;
+  autoThemeMq = window.matchMedia('(prefers-color-scheme: dark)');
+  autoThemeMq.addEventListener('change', () => {
+    if (settings.theme === 'auto') applyThemeInternal('auto');
+  });
+}
+
+function openSettingsModal() {
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === settings.theme);
+  });
+  const ts = document.getElementById('ts-slider');
+  ts.value = settings.textScale;
+  document.getElementById('ts-val').textContent = Number(settings.textScale).toFixed(2).replace('.00','').replace(/\.?0+$/,'') + '×';
+
+  const is = document.getElementById('is-slider');
+  is.value = settings.iconScale;
+  document.getElementById('is-val').textContent = Number(settings.iconScale).toFixed(2).replace('.00','').replace(/\.?0+$/,'') + '×';
+
+  const bd = document.getElementById('bd-slider');
+  bd.value = Math.round(settings.brightnessDark * 100);
+  document.getElementById('bd-val').textContent = Math.round(settings.brightnessDark * 100) + '%';
+
+  const bl = document.getElementById('bl-slider');
+  bl.value = Math.round(settings.brightnessLight * 100);
+  document.getElementById('bl-val').textContent = Math.round(settings.brightnessLight * 100) + '%';
+
+  document.getElementById('settings-overlay').classList.add('open');
+}
+
+function closeSettingsModal() {
+  saveSettingsToDevice();
+  document.getElementById('settings-overlay').classList.remove('open');
+}
+
+function setTheme(theme) {
+  settings.theme = theme;
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === theme);
+  });
+  applyThemeInternal(theme);
+  if (theme === 'auto') setupAutoThemeListener();
+}
+
+function onTextScale(v) {
+  settings.textScale = parseFloat(v);
+  document.documentElement.style.setProperty('--ts', settings.textScale);
+  document.getElementById('ts-val').textContent = Number(v).toFixed(2).replace(/\.?0+$/,'') + '×';
+}
+
+function onIconScale(v) {
+  settings.iconScale = parseFloat(v);
+  document.documentElement.style.setProperty('--is', settings.iconScale);
+  document.getElementById('is-val').textContent = Number(v).toFixed(2).replace(/\.?0+$/,'') + '×';
+}
+
+function onBrightnessDark(v) {
+  settings.brightnessDark = parseInt(v) / 100;
+  document.getElementById('bd-val').textContent = v + '%';
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    try { Android.setScreenBrightness(settings.brightnessDark); } catch(e) {}
+  }
+}
+
+function onBrightnessLight(v) {
+  settings.brightnessLight = parseInt(v) / 100;
+  document.getElementById('bl-val').textContent = v + '%';
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (isLight) {
+    try { Android.setScreenBrightness(settings.brightnessLight); } catch(e) {}
+  }
 }
 
 // ══ SVG ICONS ══
