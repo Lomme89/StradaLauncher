@@ -1,4 +1,4 @@
-package com.carlauncher;
+package com.stradalauncher;
 
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;

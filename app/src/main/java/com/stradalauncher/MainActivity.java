@@ -1,4 +1,4 @@
-package com.carlauncher;
+package com.stradalauncher;
 
 import android.Manifest;
 import android.content.ComponentName;

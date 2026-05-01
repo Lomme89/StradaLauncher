@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.carlauncher'
+    namespace 'com.stradalauncher'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.carlauncher"
+        applicationId "com.stradalauncher"
         minSdk 26
         targetSdk 34
         versionCode 1

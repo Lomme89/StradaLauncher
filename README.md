@@ -1,4 +1,4 @@
-# CarLauncher — Launcher per Headunit Android
+# StradaLauncher — Launcher per Headunit Android
 
 Launcher web-based per autoradio Android, ottimizzato per schermi 1280×720.
 Wrappa un HTML/CSS/JS in una WebView nativa con bridge Java↔JavaScript.
@@ -8,14 +8,14 @@ Wrappa un HTML/CSS/JS in una WebView nativa con bridge Java↔JavaScript.
 ## Struttura del progetto
 
 ```
-CarLauncher/
+StradaLauncher/
 ├── app/
 │   ├── build.gradle
 │   └── src/main/
 │       ├── AndroidManifest.xml           ← taggato HOME launcher
 │       ├── assets/
 │       │   └── launcher.html             ← tutta la UI (modifica qui)
-│       ├── java/com/carlauncher/
+│       ├── java/com/stradalauncher/
 │       │   ├── MainActivity.java         ← WebView + bridge GPS/Media/Apps
 │       │   └── MediaListenerService.java ← accesso MediaSession
 │       └── res/
@@ -29,7 +29,7 @@ CarLauncher/
 
 ## Come aprire in Android Studio
 
-1. Apri Android Studio → **Open** → seleziona la cartella `CarLauncher/`
+1. Apri Android Studio → **Open** → seleziona la cartella `StradaLauncher/`
 2. Attendi il sync Gradle (scarica le dipendenze automaticamente)
 3. Collega la headunit via USB (abilita Modalità Sviluppatore + Debug USB)
 4. Premi **Run ▶** — l'app viene installata
@@ -39,11 +39,11 @@ CarLauncher/
 ## Primo avvio sulla headunit
 
 ### 1. Imposta come launcher predefinito
-Premi il tasto Home fisico → comparirà "Seleziona launcher" → scegli **Car Launcher** → "Sempre"
+Premi il tasto Home fisico → comparirà "Seleziona launcher" → scegli **Strada Launcher** → "Sempre"
 
 ### 2. Abilita accesso notifiche (per i metadati musicali)
 ```
-Impostazioni Android → App → Accesso speciale → Accesso alle notifiche → Car Launcher ✓
+Impostazioni Android → App → Accesso speciale → Accesso alle notifiche → Strada Launcher ✓
 ```
 Senza questo step la velocità GPS e i pulsanti funzionano, ma il "In riproduzione" non mostra titolo/artista.
 
