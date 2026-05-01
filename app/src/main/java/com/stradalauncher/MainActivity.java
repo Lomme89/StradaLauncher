@@ -195,6 +195,40 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /**
+         * Restituisce le Activity esportate di un'app come JSON array.
+         * Ogni elemento: { label, name, component }
+         */
+        @JavascriptInterface
+        public String getAppActivities(String packageName) {
+            try {
+                PackageManager pm = getPackageManager();
+                android.content.pm.PackageInfo pi =
+                    pm.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
+
+                JSONArray arr = new JSONArray();
+                if (pi.activities == null) return arr.toString();
+
+                for (android.content.pm.ActivityInfo activity : pi.activities) {
+                    if (!activity.exported) continue;
+
+                    JSONObject obj = new JSONObject();
+                    CharSequence label = activity.loadLabel(pm);
+                    String labelText = label != null ? label.toString() : "";
+                    if (labelText.trim().isEmpty()) labelText = activity.name;
+
+                    obj.put("label", labelText);
+                    obj.put("name", activity.name);
+                    obj.put("component", activity.packageName + "/" + activity.name);
+                    arr.put(obj);
+                }
+                return arr.toString();
+            } catch (Exception e) {
+                Log.e(TAG, "getAppActivities error: " + packageName, e);
+                return "[]";
+            }
+        }
+
+        /**
          * Lancia un'app tramite packageName.
          */
         @JavascriptInterface
