@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Car Launcher</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0d0d0f;
+  --surface:  #15151a;
+  --surface2: #1c1c23;
+  --border:   rgba(255,255,255,0.07);
+  --text:     #f0f0f2;
+  --muted:    #6b6b7a;
+  --c1: #7eb8f7;
+  --c2: #a78bfa;
+  --c3: #6ee7b7;
+  --c4: #fbbf24;
+  --c5: #4ade80;
+  --c6: #f472b6;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ══ LAYOUT ══ */
+.shell {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 5vw 1fr;
+}
+
+/* ══ SIDEBAR ══ */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2vh 0 1.5vh;
+}
+
+.sb-icon {
+  color: var(--muted);
+  opacity: 0.6;
+  margin-bottom: 1vh;
+  flex-shrink: 0;
+}
+.sb-icon svg { width: 2.2vmin; height: 2.2vmin; }
+
+.sb-dots { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6vh; }
+.sb-dot  { width: 0.4vmin; height: 0.4vmin; border-radius: 50%; background: var(--border); }
+
+.sb-time {
+  font-family: 'DM Mono', monospace;
+  font-size: clamp(8px, 1.1vmin, 13px);
+  color: var(--muted);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  letter-spacing: 0.08em;
+  margin-top: 1vh;
+}
+
+/* ══ MAIN ══ */
+.main {
+  display: grid;
+  grid-template-rows: 8vh 1fr 14vh;
+  min-height: 0;
+}
+
+/* ══ TOPBAR ══ */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3vw;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.clock {
+  font-family: 'DM Mono', monospace;
+  font-size: clamp(16px, 3.5vh, 32px);
+  font-weight: 300;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.date-str {
+  font-size: clamp(9px, 1.5vh, 14px);
+  color: var(--muted);
+  margin-left: 1.2vw;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 2vw; }
+
+.status-pill {
+  display: flex; align-items: center; gap: 0.5vw;
+  font-size: clamp(8px, 1.3vh, 12px);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+}
+.status-pill svg { width: 1.8vmin; height: 1.8vmin; }
+
+/* ══ APPS AREA ══ */
+.apps-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2vh 3vw;
+  min-height: 0;
+}
+
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: clamp(8px, 1.5vmin, 20px);
+  width: 100%;
+  height: 100%;
+}
+
+/* ══ APP CARD ══ */
+.app-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: clamp(8px, 1.5vmin, 16px);
+  padding: clamp(10px, 2vh, 24px) clamp(10px, 2vw, 28px);
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.5vw, 20px);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.13s, border-color 0.13s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 0;
+}
+
+.app-card:hover  { background: var(--surface2); border-color: rgba(255,255,255,0.12); transform: translateY(-1px); }
+.app-card:active { transform: scale(0.97); }
+
+.app-card .glow {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 20% 50%, var(--cc, transparent) 0%, transparent 70%);
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.app-card:hover .glow { opacity: 0.08; }
+
+.app-icon {
+  width: clamp(32px, 5vmin, 56px);
+  height: clamp(32px, 5vmin, 56px);
+  border-radius: clamp(6px, 1.2vmin, 14px);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+}
+.app-icon svg { width: clamp(18px, 2.8vmin, 28px); height: clamp(18px, 2.8vmin, 28px); }
+.app-icon img { width: clamp(20px, 3vmin, 32px); height: clamp(20px, 3vmin, 32px); object-fit: contain; border-radius: 6px; }
+
+.app-info { flex: 1; min-width: 0; }
+
+.app-name {
+  font-size: clamp(10px, 1.8vh, 16px);
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.app-sub {
+  font-size: clamp(8px, 1.3vh, 12px);
+  color: var(--muted);
+  margin-top: 0.3vh;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.edit-badge {
+  position: absolute; top: 0.8vh; right: 0.8vw;
+  width: clamp(18px, 2.5vmin, 24px);
+  height: clamp(18px, 2.5vmin, 24px);
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: none;
+  align-items: center; justify-content: center;
+  font-size: clamp(8px, 1.2vmin, 11px);
+  color: var(--muted);
+  cursor: pointer; z-index: 5;
+  transition: background 0.1s;
+}
+.edit-mode .edit-badge { display: flex; }
+.edit-badge:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+/* ══ BOTTOMBAR ══ */
+.bottombar {
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 3vw;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.now-playing {
+  display: flex; align-items: center; gap: 1vw;
+  flex: 1; min-width: 0;
+}
+
+.np-indicator { display: flex; align-items: center; gap: 0.3vw; flex-shrink: 0; }
+.np-bar {
+  width: clamp(2px, 0.3vmin, 4px);
+  border-radius: 2px;
+  background: var(--c2);
+  animation: eq 1.2s ease infinite;
+}
+.np-bar:nth-child(1) { height: clamp(6px,  1.2vh, 10px); animation-delay: 0s; }
+.np-bar:nth-child(2) { height: clamp(10px, 2vh,   16px); animation-delay: 0.2s; }
+.np-bar:nth-child(3) { height: clamp(7px,  1.4vh, 12px); animation-delay: 0.4s; }
+.np-bar:nth-child(4) { height: clamp(5px,  1vh,   8px);  animation-delay: 0.1s; }
+
+@keyframes eq {
+  0%,100% { transform: scaleY(1); }
+  50%      { transform: scaleY(0.3); }
+}
+.np-indicator.paused .np-bar { animation: none; transform: scaleY(0.3); opacity: 0.4; }
+
+.np-label { font-size: clamp(8px, 1.3vh, 13px); color: var(--muted); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+.np-track { font-size: clamp(9px, 1.5vh, 14px); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.sep { width: 1px; height: 3vh; background: var(--border); margin: 0 2.5vw; flex-shrink: 0; }
+
+.speed-wrap { display: flex; align-items: baseline; gap: 0.4vw; flex-shrink: 0; }
+.speed-val  {
+  font-family: 'DM Mono', monospace;
+  font-size: clamp(18px, 4vh, 32px);
+  font-weight: 300; color: #fff; line-height: 1;
+  min-width: clamp(36px, 5vw, 60px);
+  text-align: right;
+}
+.speed-unit { font-size: clamp(8px, 1.2vh, 11px); color: var(--muted); font-family: 'DM Mono', monospace; }
+
+.edit-btn {
+  margin-left: 2vw;
+  padding: clamp(4px, 0.8vh, 8px) clamp(8px, 1.2vw, 16px);
+  border-radius: clamp(6px, 1vmin, 10px);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(9px, 1.4vh, 13px);
+  cursor: pointer; flex-shrink: 0;
+  transition: border-color 0.13s, color 0.13s, background 0.13s;
+}
+.edit-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+.edit-btn.active { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+/* ══ MODAL BASE ══ */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.72);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.18s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: clamp(12px, 2vmin, 20px);
+  padding: clamp(20px, 3vh, 36px) clamp(20px, 3vw, 40px);
+  width: clamp(300px, 40vw, 520px);
+  max-height: 80vh;
+  display: flex; flex-direction: column;
+  transform: translateY(6px);
+  transition: transform 0.18s;
+}
+.overlay.open .modal { transform: translateY(0); }
+
+.modal-title { font-size: clamp(13px, 2.2vh, 18px); font-weight: 500; letter-spacing: -0.01em; margin-bottom: 0.5vh; }
+.modal-sub   { font-size: clamp(10px, 1.5vh, 13px); color: var(--muted); margin-bottom: 2vh; line-height: 1.5; }
+
+.modal-list {
+  overflow-y: auto; flex: 1;
+  display: flex; flex-direction: column; gap: clamp(6px, 1vh, 10px);
+  margin-bottom: 1.5vh;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.modal-row {
+  display: flex; align-items: center; gap: clamp(8px, 1.2vw, 14px);
+  padding: clamp(8px, 1.5vh, 14px) clamp(10px, 1.5vw, 16px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: clamp(8px, 1.2vmin, 12px);
+  cursor: pointer;
+  transition: border-color 0.13s;
+  flex-shrink: 0;
+}
+.modal-row:hover { border-color: rgba(255,255,255,0.16); }
+.modal-row img  { width: clamp(22px, 3.5vmin, 30px); height: clamp(22px, 3.5vmin, 30px); border-radius: 6px; flex-shrink: 0; }
+.modal-row span { font-size: clamp(11px, 1.7vh, 14px); flex: 1; }
+.modal-row small{ font-size: clamp(9px, 1.2vh, 12px); color: var(--muted); font-family: 'DM Mono', monospace; }
+
+.modal-close {
+  width: 100%;
+  padding: clamp(8px, 1.4vh, 13px);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: clamp(7px, 1vmin, 10px);
+  color: var(--muted); font-family: 'DM Sans', sans-serif;
+  font-size: clamp(10px, 1.5vh, 13px);
+  cursor: pointer; flex-shrink: 0;
+  transition: border-color 0.13s, color 0.13s;
+}
+.modal-close:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
+
+.picker-search {
+  width: 100%;
+  padding: clamp(8px, 1.3vh, 12px) clamp(10px, 1.5vw, 16px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: clamp(7px, 1vmin, 10px);
+  color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: clamp(11px, 1.6vh, 14px);
+  margin-bottom: 1.2vh; flex-shrink: 0; outline: none;
+}
+.picker-search:focus { border-color: rgba(255,255,255,0.2); }
+
+.edit-actions { display: flex; gap: 0.8vw; margin-top: 0.5vh; }
+.edit-act-btn {
+  flex: 1;
+  padding: clamp(6px, 1vh, 10px);
+  background: transparent; border: 1px solid var(--border);
+  border-radius: clamp(6px, 1vmin, 9px); color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(9px, 1.3vh, 12px);
+  cursor: pointer; transition: border-color 0.13s, color 0.13s;
+}
+.edit-act-btn:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
+.edit-act-btn.danger:hover { border-color: #f87171; color: #f87171; }
+</style>
+</head>
+<body>
+
+<div class="shell" id="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" d="M1.5 9C6 4.5 18 4.5 22.5 9M5.5 13c2.5-2.5 11-2.5 13.5 0M9.5 17c1-1 5-1 6 0M12 21h.01"/>
+      </svg>
+    </div>
+    <div class="sb-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" d="M6.5 7L17 12L6.5 17M12 3.5V20.5L17 15.5L12 10.5"/>
+      </svg>
+    </div>
+    <div class="sb-dots">
+      <div class="sb-dot"></div><div class="sb-dot"></div><div class="sb-dot"></div>
+    </div>
+    <div class="sb-time" id="sb-time">00:00</div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div style="display:flex;align-items:baseline;gap:1vw;">
+        <div class="clock" id="clock">00:00</div>
+        <div class="date-str" id="date-str"></div>
+      </div>
+      <div class="topbar-right">
+        <div class="status-pill">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" d="M9 6.75V15m6-6v8.25M3.75 7.5l16.5-4.125"/>
+          </svg>
+          GPS
+        </div>
+      </div>
+    </div>
+
+    <!-- APPS GRID -->
+    <div class="apps-area">
+      <div class="apps-grid" id="apps-grid"></div>
+    </div>
+
+    <!-- BOTTOMBAR -->
+    <div class="bottombar">
+      <div class="now-playing">
+        <div class="np-indicator paused" id="np-indicator">
+          <div class="np-bar"></div><div class="np-bar"></div>
+          <div class="np-bar"></div><div class="np-bar"></div>
+        </div>
+        <div class="np-label">&nbsp;—&nbsp;</div>
+        <div class="np-track" id="np-track">Nessuna riproduzione</div>
+      </div>
+      <div class="sep"></div>
+      <div class="speed-wrap">
+        <div class="speed-val" id="speed-val">0</div>
+        <div class="speed-unit">km/h</div>
+      </div>
+      <button class="edit-btn" id="edit-btn" onclick="toggleEditMode()">✎ Personalizza</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- PICKER MODAL -->
+<div class="overlay" id="picker-overlay">
+  <div class="modal" style="width:clamp(300px,45vw,540px);">
+    <div class="modal-title" id="picker-title">Scegli app</div>
+    <div class="modal-sub">Assegna un'app a questo pulsante.</div>
+    <input class="picker-search" id="picker-search" type="text" placeholder="Cerca app…" oninput="filterPicker(this.value)">
+    <div class="modal-list" id="picker-list"></div>
+    <div class="edit-actions">
+      <button class="edit-act-btn danger" onclick="clearSlot()">✕ Svuota</button>
+      <button class="edit-act-btn" onclick="closePicker()">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<!-- LAUNCH MODAL -->
+<div class="overlay" id="launch-overlay">
+  <div class="modal">
+    <div class="modal-title" id="launch-title">Apri con…</div>
+    <div class="modal-sub" id="launch-sub"></div>
+    <div class="modal-list" id="launch-list"></div>
+    <button class="modal-close" onclick="closeLaunch()">Chiudi</button>
+  </div>
+</div>
+
+<script>
+// ══ DEFAULT BUTTONS ══
+const DEFAULT_BUTTONS = [
+  { id:'nav',      label:'Navigazione',   sub:'Waze · Maps',        color:'var(--c1)', icon:svgNav(),
+    apps:[{label:'Google Maps',pkg:'com.google.android.apps.maps'},{label:'Waze',pkg:'com.waze'}] },
+  { id:'music',    label:'Musica',        sub:'Spotify · YT Music', color:'var(--c2)', icon:svgMusic(),
+    apps:[{label:'Spotify',pkg:'com.spotify.music'},{label:'YouTube Music',pkg:'com.google.android.apps.youtube.music'}] },
+  { id:'phone',    label:'Telefono',      sub:'Contatti · Chiamate',color:'var(--c3)', icon:svgPhone(),
+    apps:[{label:'Telefono',pkg:'com.android.dialer'},{label:'Contatti',pkg:'com.android.contacts'}] },
+  { id:'radio',    label:'Radio FM',      sub:'App Radio',          color:'var(--c4)', icon:svgRadio(),
+    apps:[{label:'Radio FM',pkg:'com.radio.fmradio'}] },
+  { id:'auto',     label:'Android Auto',  sub:'Proiezione auto',    color:'var(--c5)', icon:svgAuto(),
+    apps:[{label:'Android Auto',pkg:'com.google.android.projection.gearhead'}] },
+  { id:'settings', label:'Impostazioni',  sub:'Sistema · Audio',    color:'var(--c6)', icon:svgSettings(),
+    apps:[{label:'Impostazioni',pkg:'__settings__'},{label:'Display',pkg:'__settings_display__'},{label:'Audio',pkg:'__settings_sound__'},{label:'Wi-Fi',pkg:'__settings_wifi__'}] },
+];
+
+let buttons = JSON.parse(JSON.stringify(DEFAULT_BUTTONS));
+let installedApps = [];
+let editMode = false;
+let pickerSlotIndex = -1;
+
+window.addEventListener('DOMContentLoaded', () => {
+  loadConfig();
+  renderGrid();
+  updateClock();
+  setInterval(updateClock, 10000);
+  loadInstalledApps();
+});
+
+function loadConfig() {
+  try {
+    const saved = Android.loadButtonConfig();
+    if (saved && saved.length > 2) {
+      JSON.parse(saved).forEach((btn, i) => {
+        if (i < buttons.length) {
+          buttons[i].label = btn.label || buttons[i].label;
+          buttons[i].sub   = btn.sub   || buttons[i].sub;
+          buttons[i].apps  = btn.apps  || buttons[i].apps;
+        }
+      });
+    }
+  } catch(e) {}
+}
+
+function saveConfig() {
+  try {
+    Android.saveButtonConfig(JSON.stringify(
+      buttons.map(b => ({ id:b.id, label:b.label, sub:b.sub, apps:b.apps }))
+    ));
+  } catch(e) {}
+}
+
+function loadInstalledApps() {
+  try {
+    installedApps = JSON.parse(Android.getInstalledApps());
+    installedApps.sort((a,b) => a.label.localeCompare(b.label));
+  } catch(e) { installedApps = []; }
+}
+
+// ══ RENDER ══
+function renderGrid() {
+  const grid = document.getElementById('apps-grid');
+  grid.innerHTML = '';
+  buttons.forEach((btn, i) => {
+    const card = document.createElement('div');
+    card.className = 'app-card';
+    card.style.setProperty('--cc', btn.color);
+    card.innerHTML = `
+      <div class="glow"></div>
+      <div class="app-icon" style="background:${btn.color}18;">${btn.icon || ''}</div>
+      <div class="app-info">
+        <div class="app-name">${btn.label}</div>
+        <div class="app-sub">${btn.sub}</div>
+      </div>
+      <div class="edit-badge" onclick="openPicker(${i},event)">✎</div>`;
+    card.addEventListener('click', () => { if (!editMode) handleCardClick(i); });
+    grid.appendChild(card);
+  });
+}
+
+function handleCardClick(i) {
+  const btn = buttons[i];
+  if (!btn.apps || btn.apps.length === 0) return;
+  if (btn.apps.length === 1) launchPkg(btn.apps[0].pkg);
+  else openLaunch(btn);
+}
+
+function launchPkg(pkg) {
+  try {
+    if (pkg.startsWith('__settings')) {
+      Android.openSettings(pkg.replace('__settings_','').replace('__',''));
+    } else {
+      Android.launchApp(pkg);
+    }
+  } catch(e) {}
+}
+
+// ══ LAUNCH MODAL ══
+function openLaunch(btn) {
+  document.getElementById('launch-title').textContent = btn.label;
+  document.getElementById('launch-sub').textContent = 'Scegli come aprire';
+  const list = document.getElementById('launch-list');
+  list.innerHTML = '';
+  btn.apps.forEach(app => {
+    const row = document.createElement('div');
+    row.className = 'modal-row';
+    const inst = installedApps.find(a => a.packageName === app.pkg);
+    row.innerHTML = inst && inst.icon
+      ? `<img src="${inst.icon}" alt=""><span>${app.label}</span><small>→</small>`
+      : `<div style="width:clamp(22px,3.5vmin,30px);height:clamp(22px,3.5vmin,30px);background:var(--surface);border-radius:6px;flex-shrink:0;"></div><span>${app.label}</span><small>→</small>`;
+    row.onclick = () => { closeLaunch(); launchPkg(app.pkg); };
+    list.appendChild(row);
+  });
+  document.getElementById('launch-overlay').classList.add('open');
+}
+function closeLaunch() { document.getElementById('launch-overlay').classList.remove('open'); }
+
+// ══ EDIT MODE ══
+function toggleEditMode() {
+  editMode = !editMode;
+  document.getElementById('shell').classList.toggle('edit-mode', editMode);
+  const btn = document.getElementById('edit-btn');
+  btn.textContent = editMode ? '✓ Fine' : '✎ Personalizza';
+  btn.classList.toggle('active', editMode);
+}
+
+// ══ PICKER ══
+function openPicker(i, e) {
+  e.stopPropagation();
+  pickerSlotIndex = i;
+  document.getElementById('picker-title').textContent = 'Pulsante ' + (i+1) + ': ' + buttons[i].label;
+  document.getElementById('picker-search').value = '';
+  renderPickerList('');
+  document.getElementById('picker-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('picker-search').focus(), 100);
+}
+function closePicker() { document.getElementById('picker-overlay').classList.remove('open'); pickerSlotIndex = -1; }
+function filterPicker(q) { renderPickerList(q.toLowerCase()); }
+
+function renderPickerList(q) {
+  const list = document.getElementById('picker-list');
+  list.innerHTML = '';
+  const filtered = installedApps.filter(a => !q || a.label.toLowerCase().includes(q));
+  if (!filtered.length) {
+    list.innerHTML = '<div style="font-size:clamp(10px,1.5vh,13px);color:var(--muted);padding:1.5vh;">Nessuna app trovata</div>';
+    return;
+  }
+  filtered.forEach(app => {
+    const row = document.createElement('div');
+    row.className = 'modal-row';
+    row.innerHTML = app.icon
+      ? `<img src="${app.icon}" alt=""><span>${app.label}</span><small>${app.packageName.split('.').pop()}</small>`
+      : `<div style="width:clamp(22px,3.5vmin,30px);height:clamp(22px,3.5vmin,30px);background:var(--surface);border-radius:6px;flex-shrink:0;"></div><span>${app.label}</span><small>${app.packageName.split('.').pop()}</small>`;
+    row.onclick = () => assignApp(app);
+    list.appendChild(row);
+  });
+}
+
+function assignApp(app) {
+  if (pickerSlotIndex < 0) return;
+  buttons[pickerSlotIndex].label = app.label;
+  buttons[pickerSlotIndex].sub   = app.packageName.split('.').pop();
+  buttons[pickerSlotIndex].apps  = [{label: app.label, pkg: app.packageName}];
+  if (app.icon) buttons[pickerSlotIndex].icon = `<img src="${app.icon}" style="width:clamp(20px,3vmin,32px);height:clamp(20px,3vmin,32px);border-radius:6px;">`;
+  saveConfig(); renderGrid(); closePicker();
+}
+
+function clearSlot() {
+  if (pickerSlotIndex < 0) return;
+  buttons[pickerSlotIndex] = { ...buttons[pickerSlotIndex], label:'Vuoto', sub:'Tocca ✎ per assegnare', apps:[], icon:'＋' };
+  saveConfig(); renderGrid(); closePicker();
+}
+
+document.getElementById('picker-overlay').addEventListener('click', e => { if (e.target === document.getElementById('picker-overlay')) closePicker(); });
+document.getElementById('launch-overlay').addEventListener('click', e => { if (e.target === document.getElementById('launch-overlay')) closeLaunch(); });
+
+// ══ GPS ══
+window.onGpsSpeed = kmh => { document.getElementById('speed-val').textContent = Math.round(kmh); };
+
+// ══ MEDIA ══
+window.onMediaUpdate = track => {
+  const el  = document.getElementById('np-track');
+  const ind = document.getElementById('np-indicator');
+  if (track) { el.textContent = track; ind.classList.remove('paused'); }
+  else        { el.textContent = 'Nessuna riproduzione'; ind.classList.add('paused'); }
+};
+
+// ══ CLOCK ══
+function updateClock() {
+  const now = new Date();
+  const t = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent = t;
+  document.getElementById('sb-time').textContent = t;
+  const days   = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  const months = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  document.getElementById('date-str').textContent = days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()];
+}
+
+// ══ SVG ICONS ══
+function svgNav()      { return `<svg fill="none" viewBox="0 0 24 24" stroke="var(--c1)" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/></svg>`; }
+function svgMusic()    { return `<svg fill="none" viewBox="0 0 24 24" stroke="var(--c2)" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-.99-3.467l2.31-.66a2.25 2.25 0 0 0 1.632-2.163Zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 0 1-.99-3.467l2.31-.66A2.25 2.25 0 0 0 9 15.553Z"/></svg>`; }
+function svgPhone()    { return `<svg fill="none" viewBox="0 0 24 24" stroke="var(--c3)" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"/></svg>`; }
+function svgRadio()    { return `<svg fill="none" viewBox="0 0 24 24" stroke="var(--c4)" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5l16.5-4.125M12 6.75c-2.708 0-5.363.224-7.948.655C2.999 7.58 2.25 8.507 2.25 9.574v9.176A2.25 2.25 0 0 0 4.5 21h15a2.25 2.25 0 0 0 2.25-2.25V9.574c0-1.067-.75-1.994-1.802-2.169A48.329 48.329 0 0 0 12 6.75Zm-1.5 6a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Z"/></svg>`; }
+function svgAuto()     { return `<svg fill="none" viewBox="0 0 24 24" stroke="var(--c5)" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg>`; }
+function svgSettings() { return `<svg fill="none" viewBox="0 0 24 24" stroke="var(--c6)" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>`; }
+</script>
+</body>
+</html>

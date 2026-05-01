@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local properties (contains SDK path - machine specific)
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# IntelliJ
+out/
+
+# Kotlin
+*.class
+
+# Misc
+nul
+*.orig
