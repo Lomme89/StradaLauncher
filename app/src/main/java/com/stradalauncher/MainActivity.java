@@ -169,6 +169,13 @@ public class MainActivity extends AppCompatActivity {
                 view.loadUrl("file:///android_asset/launcher.html");
                 return true;
             }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                boolean enabled = isNotificationListenerEnabledInternal();
+                view.postDelayed(() -> view.evaluateJavascript(
+                    "if(window.onNotificationListenerStatus) window.onNotificationListenerStatus(" + enabled + ");", null), 600);
+            }
         });
 
         webView.addJavascriptInterface(new JsBridge(), "Android");
@@ -352,6 +359,18 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
+        public boolean isNotificationListenerEnabled() {
+            return isNotificationListenerEnabledInternal();
+        }
+
+        @JavascriptInterface
+        public void openNotificationListenerSettings() {
+            Intent i = new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        }
+
+        @JavascriptInterface
         public void openSettings(String type) {
             String action;
             switch (type) {
@@ -406,6 +425,13 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "launchIntent error: " + json, e);
             }
         }
+    }
+
+    // ─── NOTIFICATION LISTENER PERMISSION ───────────────────────────────────
+    private boolean isNotificationListenerEnabledInternal() {
+        String flat = android.provider.Settings.Secure.getString(
+            getContentResolver(), "enabled_notification_listeners");
+        return flat != null && flat.contains(getPackageName());
     }
 
     // ─── APPS CACHE ──────────────────────────────────────────────────────────
@@ -547,22 +573,24 @@ public class MainActivity extends AppCompatActivity {
                     "if(window.onPlaybackState) window.onPlaybackState(" + lastPlayState + ");", null));
             }
 
-            if (meta != null && playing) {
+            if (meta != null) {
                 String title  = meta.getString(MediaMetadata.METADATA_KEY_TITLE);
                 String artist = meta.getString(MediaMetadata.METADATA_KEY_ARTIST);
-                String track  = (artist != null ? artist + " — " : "") + (title != null ? title : "");
-                if (!track.equals(lastTrack)) {
-                    lastTrack = track;
+                String titleSafe  = title  != null ? title  : "";
+                String artistSafe = artist != null ? artist : "";
+                String trackKey   = artistSafe + "—" + titleSafe;
+                if (!trackKey.equals(lastTrack)) {
+                    lastTrack = trackKey;
                     String artB64 = extractArtBase64(meta);
-                    final String t = track, a = artB64;
+                    final String ft = titleSafe, fa = artistSafe, fart = artB64;
                     runOnUiThread(() -> {
                         webView.evaluateJavascript(
-                            "if(window.onMediaUpdate) window.onMediaUpdate(" + JSONObject.quote(t) + ");", null);
+                            "if(window.onMediaUpdate) window.onMediaUpdate(" + JSONObject.quote(ft) + "," + JSONObject.quote(fa) + ");", null);
                         webView.evaluateJavascript(
-                            "if(window.onAlbumArt) window.onAlbumArt(" + JSONObject.quote(a) + ");", null);
+                            "if(window.onAlbumArt) window.onAlbumArt(" + JSONObject.quote(fart) + ");", null);
                     });
                 }
-            } else if (!playing && !lastTrack.isEmpty()) {
+            } else if (!lastTrack.isEmpty()) {
                 clearMediaState();
             }
         } catch (SecurityException e) {
@@ -577,9 +605,17 @@ public class MainActivity extends AppCompatActivity {
             Bitmap art = meta.getBitmap(MediaMetadata.METADATA_KEY_ART);
             if (art == null) art = meta.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
             if (art == null) return "";
-            Bitmap scaled = Bitmap.createScaledBitmap(art, 80, 80, true);
+            int maxSize = 400;
+            int w = art.getWidth(), h = art.getHeight();
+            Bitmap scaled;
+            if (w > maxSize || h > maxSize) {
+                float ratio = Math.min((float) maxSize / w, (float) maxSize / h);
+                scaled = Bitmap.createScaledBitmap(art, Math.round(w * ratio), Math.round(h * ratio), true);
+            } else {
+                scaled = art;
+            }
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            scaled.compress(Bitmap.CompressFormat.JPEG, 65, bos);
+            scaled.compress(Bitmap.CompressFormat.JPEG, 80, bos);
             return "data:image/jpeg;base64," + Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP);
         } catch (Exception e) { return ""; }
     }
@@ -588,7 +624,7 @@ public class MainActivity extends AppCompatActivity {
         if (!lastTrack.isEmpty() || lastPlayState) {
             lastTrack = ""; lastPlayState = false;
             runOnUiThread(() -> {
-                webView.evaluateJavascript("if(window.onMediaUpdate) window.onMediaUpdate('');", null);
+                webView.evaluateJavascript("if(window.onMediaUpdate) window.onMediaUpdate('','');", null);
                 webView.evaluateJavascript("if(window.onAlbumArt) window.onAlbumArt('');", null);
                 webView.evaluateJavascript("if(window.onPlaybackState) window.onPlaybackState(false);", null);
             });

@@ -21,3 +21,6 @@ out/
 # Misc
 nul
 *.orig
+
+# Local generated pet assets
+pet-runs/
