@@ -478,28 +478,36 @@ public class MainActivity extends AppCompatActivity {
             List<Future<JSONObject>> futures = new ArrayList<>(apps.size());
             for (ResolveInfo info : apps) {
                 futures.add(iconPool.submit(() -> {
-                    JSONObject obj = new JSONObject();
-                    obj.put("label", info.loadLabel(pm).toString());
-                    obj.put("packageName", info.activityInfo.packageName);
                     try {
-                        Drawable d = info.loadIcon(pm);
-                        Bitmap bmp = Bitmap.createBitmap(40, 40, Bitmap.Config.RGB_565);
-                        Canvas c = new Canvas(bmp);
-                        d.setBounds(0, 0, 40, 40);
-                        d.draw(c);
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream(2048);
-                        bmp.compress(Bitmap.CompressFormat.JPEG, 55, bos);
-                        bmp.recycle();
-                        obj.put("icon", "data:image/jpeg;base64," +
-                            Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP));
-                    } catch (Exception ignored) {
-                        obj.put("icon", "");
+                        JSONObject obj = new JSONObject();
+                        obj.put("label", info.loadLabel(pm).toString());
+                        obj.put("packageName", info.activityInfo.packageName);
+                        try {
+                            Drawable d = info.loadIcon(pm);
+                            Bitmap bmp = Bitmap.createBitmap(40, 40, Bitmap.Config.ARGB_8888);
+                            Canvas c = new Canvas(bmp);
+                            d.setBounds(0, 0, 40, 40);
+                            d.draw(c);
+                            ByteArrayOutputStream bos = new ByteArrayOutputStream(2048);
+                            bmp.compress(Bitmap.CompressFormat.JPEG, 55, bos);
+                            bmp.recycle();
+                            obj.put("icon", "data:image/jpeg;base64," +
+                                Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP));
+                        } catch (Throwable ignored) {
+                            obj.put("icon", "");
+                        }
+                        return obj;
+                    } catch (Throwable t) {
+                        Log.w(TAG, "buildAppsJson: skip " + info.activityInfo.packageName, t);
+                        return null;
                     }
-                    return obj;
                 }));
             }
             JSONArray arr = new JSONArray();
-            for (Future<JSONObject> f : futures) arr.put(f.get());
+            for (Future<JSONObject> f : futures) {
+                JSONObject obj = f.get();
+                if (obj != null) arr.put(obj);
+            }
             return arr.toString();
         } finally {
             iconPool.shutdown();
