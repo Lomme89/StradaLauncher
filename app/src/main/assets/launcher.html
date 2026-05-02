@@ -250,6 +250,11 @@ html, body {
 .label-edit-lbl { font-size: clamp(9px,1.2vh,11px); color: var(--muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; min-width: 8ch; flex-shrink: 0; }
 .label-edit-inp { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: clamp(5px,0.8vmin,8px); color: var(--text); font-family: var(--font-body); font-size: clamp(11px,1.6vh,14px); padding: clamp(5px,0.9vh,9px) clamp(8px,1.1vw,14px); outline: none; transition: border-color 0.13s; }
 .label-edit-inp:focus { border-color: var(--hover-border); }
+.icon-mode-row { display: flex; align-items: center; gap: 0.8vw; }
+.icon-mode-options { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6vw; }
+.icon-mode-option { display: flex; align-items: center; justify-content: center; min-height: clamp(26px,3.8vh,36px); border: 1px solid var(--border); border-radius: clamp(5px,0.8vmin,8px); background: var(--bg); color: var(--muted); cursor: pointer; font-size: clamp(10px,1.4vh,13px); transition: border-color 0.13s, color 0.13s, background 0.13s; }
+.icon-mode-option input { position: absolute; opacity: 0; pointer-events: none; }
+.icon-mode-option.active { border-color: var(--c1); color: var(--text); background: rgba(126,184,247,0.08); }
 .label-save-btn { width: 100%; padding: clamp(7px,1.1vh,11px); background: transparent; border: 1px solid var(--c1); border-radius: clamp(6px,1vmin,9px); color: var(--c1); font-family: var(--font-body); font-size: clamp(10px,1.4vh,13px); cursor: pointer; transition: background 0.13s; margin-bottom: 0.6vh; }
 .label-save-btn:hover { background: rgba(126,184,247,0.1); }
 .edit-actions { display: flex; gap: 0.8vw; margin-top: 0.5vh; }
@@ -697,6 +702,13 @@ html, body {
         <span class="label-edit-lbl">Sotto</span>
         <input class="label-edit-inp" id="label-edit-sub" type="text" placeholder="Etichetta secondaria…">
       </div>
+      <div class="icon-mode-row">
+        <span class="label-edit-lbl">Icona</span>
+        <div class="icon-mode-options">
+          <label class="icon-mode-option"><input id="icon-mode-native" name="icon-mode" type="radio" value="native" onchange="setIconMode('native')">Nativa</label>
+          <label class="icon-mode-option"><input id="icon-mode-app" name="icon-mode" type="radio" value="app" onchange="setIconMode('app')">App</label>
+        </div>
+      </div>
       <button class="label-save-btn" onclick="saveLabelEdit()">✓ Salva etichetta</button>
     </div>
     <div class="modal-sub" style="margin-bottom:0.8vh;">Cambia app assegnata:</div>
@@ -985,12 +997,12 @@ let _filterTimer = null;
 let _clockEl, _dateEl;
 
 const DEFAULT_BUTTONS = [
-  { id:'nav',      iconKey:'nav',      label:'Navigazione',  sub:'Waze · Maps',        color:'var(--c1)', apps:[{label:'Google Maps',pkg:'com.google.android.apps.maps'},{label:'Waze',pkg:'com.waze'}] },
-  { id:'music',    iconKey:'music',    label:'Musica',       sub:'Spotify · YT Music', color:'var(--c2)', apps:[{label:'Spotify',pkg:'com.spotify.music'},{label:'YouTube Music',pkg:'com.google.android.apps.youtube.music'}] },
-  { id:'phone',    iconKey:'phone',    label:'Telefono',     sub:'Contatti · Chiamate',color:'var(--c3)', apps:[{label:'Telefono',pkg:'com.android.dialer'},{label:'Contatti',pkg:'com.android.contacts'}] },
-  { id:'radio',    iconKey:'radio',    label:'Radio FM',     sub:'App Radio',          color:'var(--c4)', apps:[{label:'Radio FM',pkg:'com.radio.fmradio'}] },
-  { id:'auto',     iconKey:'auto',     label:'Android Auto', sub:'Proiezione auto',    color:'var(--c5)', apps:[{label:'Android Auto',pkg:'com.google.android.projection.gearhead'}] },
-  { id:'settings', iconKey:'settings', label:'Impostazioni', sub:'Sistema · Audio',    color:'var(--c6)', apps:[{label:'Impostazioni',pkg:'__settings__'},{label:'Display',pkg:'__settings_display__'},{label:'Audio',pkg:'__settings_sound__'},{label:'Wi-Fi',pkg:'__settings_wifi__'}] },
+  { id:'nav',      iconKey:'nav',      iconMode:'native', label:'Navigazione',  sub:'Waze · Maps',        color:'var(--c1)', apps:[{label:'Google Maps',pkg:'com.google.android.apps.maps'},{label:'Waze',pkg:'com.waze'}] },
+  { id:'music',    iconKey:'music',    iconMode:'native', label:'Musica',       sub:'Spotify · YT Music', color:'var(--c2)', apps:[{label:'Spotify',pkg:'com.spotify.music'},{label:'YouTube Music',pkg:'com.google.android.apps.youtube.music'}] },
+  { id:'phone',    iconKey:'phone',    iconMode:'native', label:'Telefono',     sub:'Contatti · Chiamate',color:'var(--c3)', apps:[{label:'Telefono',pkg:'com.android.dialer'},{label:'Contatti',pkg:'com.android.contacts'}] },
+  { id:'radio',    iconKey:'radio',    iconMode:'native', label:'Radio FM',     sub:'App Radio',          color:'var(--c4)', apps:[{label:'Radio FM',pkg:'com.radio.fmradio'}] },
+  { id:'auto',     iconKey:'auto',     iconMode:'native', label:'Android Auto', sub:'Proiezione auto',    color:'var(--c5)', apps:[{label:'Android Auto',pkg:'com.google.android.projection.gearhead'}] },
+  { id:'settings', iconKey:'settings', iconMode:'native', label:'Impostazioni', sub:'Sistema · Audio',    color:'var(--c6)', apps:[{label:'Impostazioni',pkg:'__settings__'},{label:'Display',pkg:'__settings_display__'},{label:'Audio',pkg:'__settings_sound__'},{label:'Wi-Fi',pkg:'__settings_wifi__'}] },
 ];
 
 let buttons = JSON.parse(JSON.stringify(DEFAULT_BUTTONS));
@@ -1022,6 +1034,7 @@ function loadConfig() {
           buttons[i].label = btn.label || buttons[i].label;
           buttons[i].sub   = btn.sub   || buttons[i].sub;
           buttons[i].apps  = btn.apps  || buttons[i].apps;
+          buttons[i].iconMode = btn.iconMode || buttons[i].iconMode || 'native';
         }
       });
     }
@@ -1031,7 +1044,7 @@ function loadConfig() {
 function saveConfig() {
   try {
     Android.saveButtonConfig(JSON.stringify(
-      buttons.map(b => ({ id:b.id, label:b.label, sub:b.sub, apps:b.apps }))
+      buttons.map(b => ({ id:b.id, label:b.label, sub:b.sub, iconMode:b.iconMode, apps:b.apps }))
     ));
   } catch(e) {}
 }
@@ -1042,6 +1055,18 @@ function loadInstalledApps() {
     installedApps.sort((a,b) => a.label.localeCompare(b.label));
   } catch(e) { installedApps = []; }
 }
+
+window.onAppsReady = function(json) {
+  try {
+    installedApps = JSON.parse(json);
+    installedApps.sort((a,b) => a.label.localeCompare(b.label));
+    const drawer = document.getElementById('drawer-overlay');
+    if (drawer && drawer.classList.contains('open')) {
+      const q = (document.getElementById('drawer-search')?.value || '').toLowerCase();
+      renderDrawer(q);
+    }
+  } catch(e) {}
+};
 
 // ══ COLOR HELPERS ══
 function resolveColor(cssColor) {
@@ -1057,8 +1082,20 @@ function hexToRgba(hex, alpha) {
 }
 
 // ══ RENDER ══
+function getAppIconForButton(btn) {
+  const app = btn.apps && btn.apps.find(a => a.pkg && !a.pkg.startsWith('__'));
+  const inst = app && installedApps.find(a => a.packageName === app.pkg);
+  return inst && inst.icon
+    ? `<img src="${inst.icon}" alt="">`
+    : '';
+}
+
 function getButtonIcon(btn, colorOverride) {
   const c = colorOverride || btn.color;
+  if (btn.iconMode === 'app') {
+    const appIcon = getAppIconForButton(btn);
+    if (appIcon) return appIcon;
+  }
   if (btn.icon) {
     if (btn.icon === '＋') return '＋';
     if (btn.icon.startsWith('<img')) return btn.icon;
@@ -1163,6 +1200,7 @@ function openPicker(i, e) {
   document.getElementById('picker-title').textContent = 'Pulsante ' + (i+1);
   document.getElementById('label-edit-title').value = buttons[i].label;
   document.getElementById('label-edit-sub').value   = buttons[i].sub;
+  syncIconModeControls(buttons[i].iconMode || 'native');
   document.getElementById('picker-search').value = '';
   renderPickerList('');
   document.getElementById('picker-overlay').classList.add('open');
@@ -1175,10 +1213,32 @@ function saveLabelEdit() {
   const s = document.getElementById('label-edit-sub').value.trim();
   if (t) buttons[pickerSlotIndex].label = t;
   if (s !== undefined) buttons[pickerSlotIndex].sub = s;
+  buttons[pickerSlotIndex].iconMode = getSelectedIconMode();
   saveConfig(); renderGrid();
 }
 function closePicker()      { document.getElementById('picker-overlay').classList.remove('open'); pickerSlotIndex = -1; }
 function filterPicker(q)    { renderPickerList(q.toLowerCase()); }
+
+function getSelectedIconMode() {
+  return document.getElementById('icon-mode-app').checked ? 'app' : 'native';
+}
+
+function setIconMode(mode) {
+  if (pickerSlotIndex < 0) return;
+  buttons[pickerSlotIndex].iconMode = mode === 'app' ? 'app' : 'native';
+  syncIconModeControls(buttons[pickerSlotIndex].iconMode);
+  saveConfig(); renderGrid();
+}
+
+function syncIconModeControls(mode) {
+  const useApp = mode === 'app';
+  const nativeInp = document.getElementById('icon-mode-native');
+  const appInp = document.getElementById('icon-mode-app');
+  nativeInp.checked = !useApp;
+  appInp.checked = useApp;
+  nativeInp.closest('.icon-mode-option').classList.toggle('active', !useApp);
+  appInp.closest('.icon-mode-option').classList.toggle('active', useApp);
+}
 
 // ══ INTENT MODAL ══
 function openIntentModal() {
@@ -1351,14 +1411,15 @@ function assignApp(app) {
   buttons[pickerSlotIndex].label = customTitle || app.label;
   buttons[pickerSlotIndex].sub   = customSub   || app.packageName.split('.').pop();
   buttons[pickerSlotIndex].apps  = [{label: app.label, pkg: app.packageName}];
-  if (app.icon) buttons[pickerSlotIndex].icon = `<img src="${app.icon}" style="width:clamp(20px,3vmin,32px);height:clamp(20px,3vmin,32px);border-radius:6px;">`;
+  buttons[pickerSlotIndex].iconMode = getSelectedIconMode();
+  delete buttons[pickerSlotIndex].icon;
   saveConfig(); renderGrid(); closePicker();
 }
 
 function clearSlot() {
   if (pickerSlotIndex < 0) return;
   const b = buttons[pickerSlotIndex];
-  b.label = 'Vuoto'; b.sub = 'Tocca ✎ per assegnare'; b.apps = []; b.icon = '＋';
+  b.label = 'Vuoto'; b.sub = 'Tocca ✎ per assegnare'; b.apps = []; b.icon = '＋'; b.iconMode = 'native';
   saveConfig(); renderGrid(); closePicker();
 }
 

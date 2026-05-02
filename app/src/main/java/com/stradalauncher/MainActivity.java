@@ -19,20 +19,27 @@ import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -48,10 +55,13 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "CarLauncher";
     private static final int PERM_LOCATION = 100;
+    private static final String APPS_CACHE_KEY = "apps_cache";
 
     private WebView webView;
     private LocationManager locationManager;
     private SharedPreferences prefs;
+    private final ExecutorService bgExecutor = Executors.newSingleThreadExecutor();
+    private BroadcastReceiver packageReceiver;
 
     // ─── LOCATION LISTENER ───────────────────────────────────────────────────
     private final LocationListener locationListener = new LocationListener() {
@@ -89,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         setupWebView();
         requestLocationPermission();
         startMediaPolling();
+        registerPackageReceiver();
     }
 
     @Override
@@ -135,63 +146,60 @@ public class MainActivity extends AppCompatActivity {
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
+        s.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
 
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         webView.setWebChromeClient(new WebChromeClient());
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                Log.w(TAG, "WebView render process gone, reloading");
+                view.loadUrl("file:///android_asset/launcher.html");
+                return true;
+            }
+        });
 
-        // Espone il bridge "Android" a JavaScript
         webView.addJavascriptInterface(new JsBridge(), "Android");
-
-        // Carica l'HTML dagli assets
         webView.loadUrl("file:///android_asset/launcher.html");
+    }
+
+    private void registerPackageReceiver() {
+        packageReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                bgExecutor.execute(() -> refreshAppsCache());
+            }
+        };
+        IntentFilter f = new IntentFilter();
+        f.addAction(Intent.ACTION_PACKAGE_ADDED);
+        f.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        f.addAction(Intent.ACTION_PACKAGE_CHANGED);
+        f.addDataScheme("package");
+        registerReceiver(packageReceiver, f);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (packageReceiver != null) {
+            try { unregisterReceiver(packageReceiver); } catch (Exception ignored) {}
+        }
+        bgExecutor.shutdown();
     }
 
     // ─── JAVASCRIPT BRIDGE ───────────────────────────────────────────────────
     private class JsBridge {
 
         /**
-         * Restituisce la lista delle app installate come JSON array.
-         * Ogni elemento: { label, packageName, icon (base64 PNG) }
+         * Ritorna la lista app dalla cache SharedPreferences (fast path).
+         * Lancia un refresh in background che aggiorna la cache e chiama
+         * window.onAppsReady(json) via evaluateJavascript quando finisce.
          */
         @JavascriptInterface
         public String getInstalledApps() {
-            try {
-                PackageManager pm = getPackageManager();
-                Intent intent = new Intent(Intent.ACTION_MAIN, null);
-                intent.addCategory(Intent.CATEGORY_LAUNCHER);
-                List<ResolveInfo> apps = pm.queryIntentActivities(intent, 0);
-
-                JSONArray arr = new JSONArray();
-                for (ResolveInfo info : apps) {
-                    JSONObject obj = new JSONObject();
-                    obj.put("label", info.loadLabel(pm).toString());
-                    obj.put("packageName", info.activityInfo.packageName);
-
-                    // Icona → base64
-                    try {
-                        Drawable d = info.loadIcon(pm);
-                        Bitmap bmp = Bitmap.createBitmap(
-                            d.getIntrinsicWidth() > 0 ? d.getIntrinsicWidth() : 96,
-                            d.getIntrinsicHeight() > 0 ? d.getIntrinsicHeight() : 96,
-                            Bitmap.Config.ARGB_8888);
-                        Canvas c = new Canvas(bmp);
-                        d.setBounds(0, 0, c.getWidth(), c.getHeight());
-                        d.draw(c);
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        bmp.compress(Bitmap.CompressFormat.PNG, 80, bos);
-                        String b64 = Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP);
-                        obj.put("icon", "data:image/png;base64," + b64);
-                    } catch (Exception ignored) {
-                        obj.put("icon", "");
-                    }
-
-                    arr.put(obj);
-                }
-                return arr.toString();
-            } catch (Exception e) {
-                Log.e(TAG, "getInstalledApps error", e);
-                return "[]";
-            }
+            String cached = prefs.getString(APPS_CACHE_KEY, "");
+            bgExecutor.execute(() -> refreshAppsCache());
+            return cached.isEmpty() ? "[]" : cached;
         }
 
         /**
@@ -385,6 +393,50 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "launchIntent error: " + json, e);
             }
         }
+    }
+
+    // ─── APPS CACHE ──────────────────────────────────────────────────────────
+    private void refreshAppsCache() {
+        try {
+            String json = buildAppsJson();
+            prefs.edit().putString(APPS_CACHE_KEY, json).apply();
+            final String js = "if(window.onAppsReady) window.onAppsReady(" + json + ");";
+            webView.post(() -> webView.evaluateJavascript(js, null));
+        } catch (Exception e) {
+            Log.e(TAG, "refreshAppsCache error", e);
+        }
+    }
+
+    private String buildAppsJson() throws Exception {
+        PackageManager pm = getPackageManager();
+        Intent intent = new Intent(Intent.ACTION_MAIN, null);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        List<ResolveInfo> apps = pm.queryIntentActivities(intent, 0);
+
+        JSONArray arr = new JSONArray();
+        for (ResolveInfo info : apps) {
+            JSONObject obj = new JSONObject();
+            obj.put("label", info.loadLabel(pm).toString());
+            obj.put("packageName", info.activityInfo.packageName);
+            try {
+                Drawable d = info.loadIcon(pm);
+                Bitmap bmp = Bitmap.createBitmap(
+                    d.getIntrinsicWidth() > 0 ? d.getIntrinsicWidth() : 96,
+                    d.getIntrinsicHeight() > 0 ? d.getIntrinsicHeight() : 96,
+                    Bitmap.Config.ARGB_8888);
+                Canvas c = new Canvas(bmp);
+                d.setBounds(0, 0, c.getWidth(), c.getHeight());
+                d.draw(c);
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                bmp.compress(Bitmap.CompressFormat.PNG, 80, bos);
+                obj.put("icon", "data:image/png;base64," +
+                    Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP));
+            } catch (Exception ignored) {
+                obj.put("icon", "");
+            }
+            arr.put(obj);
+        }
+        return arr.toString();
     }
 
     // ─── GPS ─────────────────────────────────────────────────────────────────
