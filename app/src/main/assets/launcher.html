@@ -357,13 +357,15 @@ html, body {
   display: flex; align-items: center; justify-content: center;
   border-radius: 50%; transition: color 0.13s, background 0.13s, opacity 0.13s; flex-shrink: 0;
 }
-.mc-btn:hover { opacity: 1; background: var(--surface2); }
+.mc-btn:active { opacity: 1; background: var(--surface2); }
 .mc-btn:focus { outline: none; }
-.mc-btn:focus:not(:focus-visible) { opacity: 0.55; background: transparent; }
-.mc-play:focus:not(:focus-visible) { opacity: 1; background: var(--surface2); border-color: var(--border); }
+@media (hover: hover) {
+  .mc-btn:hover { opacity: 1; background: var(--surface2); }
+  .mc-play:hover { background: var(--surface2); border-color: var(--hover-border); }
+}
 .mc-btn svg { width: clamp(18px, 3.4vh, 26px); height: clamp(18px, 3.4vh, 26px); }
 .mc-play { opacity: 1; background: var(--surface2); border: 1px solid var(--border); }
-.mc-play:hover { background: var(--surface2); border-color: var(--hover-border); }
+.mc-play:active { background: var(--surface2); border-color: var(--hover-border); }
 .mc-play svg { width: clamp(20px, 3.8vh, 29px); height: clamp(20px, 3.8vh, 29px); }
 
 /* ══ VOLUME ══ */
@@ -374,7 +376,8 @@ html, body {
   border: 0; border-radius: 50%; background: transparent; cursor: pointer;
   transition: opacity 0.13s, background 0.13s, color 0.13s;
 }
-.vol-icon:hover { opacity: 1; background: var(--surface2); }
+.vol-icon:active { opacity: 1; background: var(--surface2); }
+@media (hover: hover) { .vol-icon:hover { opacity: 1; background: var(--surface2); } }
 .vol-icon.muted { color: var(--c6); opacity: 1; }
 .vol-icon svg { width: clamp(18px, 3.2vh, 24px); height: clamp(18px, 3.2vh, 24px); }
 #vol-slider { width: clamp(130px, 18vw, 300px); accent-color: var(--c1); cursor: pointer; height: clamp(24px, 3.5vh, 34px); }
