@@ -36,8 +36,11 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
@@ -58,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "CarLauncher";
     private static final int PERM_LOCATION = 100;
     private static final String APPS_CACHE_FILE = "apps_cache.json";
+    private static final String APPS_HASH_KEY   = "apps_hash";
+    private static final int    ICON_THREADS    = 3;
 
     private WebView webView;
     private LocationManager locationManager;
@@ -67,7 +72,8 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver packageReceiver;
     private MediaSessionManager msmCached;
     private volatile String appsJsonMemCache = null;
-    private volatile float cachedBrightness = -1f;
+    private volatile String appsHashCache    = null;
+    private volatile float  cachedBrightness = -1f;
 
     // ─── LOCATION LISTENER ───────────────────────────────────────────────────
     private final LocationListener locationListener = new LocationListener() {
@@ -158,8 +164,13 @@ public class MainActivity extends AppCompatActivity {
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
         s.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        s.setBlockNetworkLoads(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            s.setOffscreenPreRaster(true);
+        }
 
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -437,8 +448,22 @@ public class MainActivity extends AppCompatActivity {
     // ─── APPS CACHE ──────────────────────────────────────────────────────────
     private void refreshAppsCache() {
         try {
-            String json = buildAppsJson();
+            PackageManager pm = getPackageManager();
+            Intent intent = new Intent(Intent.ACTION_MAIN, null);
+            intent.addCategory(Intent.CATEGORY_LAUNCHER);
+            List<ResolveInfo> apps = pm.queryIntentActivities(intent, 0);
+
+            String hash = computeAppsHash(apps);
+            if (hash.equals(loadAppsHash()) && appsJsonMemCache != null) {
+                final String cached = appsJsonMemCache;
+                webView.post(() -> webView.evaluateJavascript(
+                    "if(window.onAppsReady) window.onAppsReady(" + cached + ");", null));
+                return;
+            }
+
+            String json = buildAppsJson(apps, pm);
             appsJsonMemCache = json;
+            saveAppsHash(hash);
             writeAppsCache(json);
             final String js = "if(window.onAppsReady) window.onAppsReady(" + json + ");";
             webView.post(() -> webView.evaluateJavascript(js, null));
@@ -447,33 +472,58 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private String buildAppsJson() throws Exception {
-        PackageManager pm = getPackageManager();
-        Intent intent = new Intent(Intent.ACTION_MAIN, null);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
-        List<ResolveInfo> apps = pm.queryIntentActivities(intent, 0);
-
-        JSONArray arr = new JSONArray();
-        for (ResolveInfo info : apps) {
-            JSONObject obj = new JSONObject();
-            obj.put("label", info.loadLabel(pm).toString());
-            obj.put("packageName", info.activityInfo.packageName);
-            try {
-                Drawable d = info.loadIcon(pm);
-                Bitmap bmp = Bitmap.createBitmap(48, 48, Bitmap.Config.ARGB_8888);
-                Canvas c = new Canvas(bmp);
-                d.setBounds(0, 0, 48, 48);
-                d.draw(c);
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                bmp.compress(Bitmap.CompressFormat.JPEG, 60, bos);
-                obj.put("icon", "data:image/jpeg;base64," +
-                    Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP));
-            } catch (Exception ignored) {
-                obj.put("icon", "");
+    private String buildAppsJson(List<ResolveInfo> apps, PackageManager pm) throws Exception {
+        ExecutorService iconPool = Executors.newFixedThreadPool(ICON_THREADS);
+        try {
+            List<Future<JSONObject>> futures = new ArrayList<>(apps.size());
+            for (ResolveInfo info : apps) {
+                futures.add(iconPool.submit(() -> {
+                    JSONObject obj = new JSONObject();
+                    obj.put("label", info.loadLabel(pm).toString());
+                    obj.put("packageName", info.activityInfo.packageName);
+                    try {
+                        Drawable d = info.loadIcon(pm);
+                        Bitmap bmp = Bitmap.createBitmap(40, 40, Bitmap.Config.RGB_565);
+                        Canvas c = new Canvas(bmp);
+                        d.setBounds(0, 0, 40, 40);
+                        d.draw(c);
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream(2048);
+                        bmp.compress(Bitmap.CompressFormat.JPEG, 55, bos);
+                        bmp.recycle();
+                        obj.put("icon", "data:image/jpeg;base64," +
+                            Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP));
+                    } catch (Exception ignored) {
+                        obj.put("icon", "");
+                    }
+                    return obj;
+                }));
             }
-            arr.put(obj);
+            JSONArray arr = new JSONArray();
+            for (Future<JSONObject> f : futures) arr.put(f.get());
+            return arr.toString();
+        } finally {
+            iconPool.shutdown();
         }
-        return arr.toString();
+    }
+
+    private String computeAppsHash(List<ResolveInfo> apps) {
+        List<String> pkgs = new ArrayList<>(apps.size());
+        for (ResolveInfo info : apps) pkgs.add(info.activityInfo.packageName);
+        Collections.sort(pkgs);
+        int hash = pkgs.size();
+        for (String pkg : pkgs) hash = hash * 31 + pkg.hashCode();
+        return String.valueOf(hash);
+    }
+
+    private String loadAppsHash() {
+        if (appsHashCache != null) return appsHashCache;
+        appsHashCache = prefs.getString(APPS_HASH_KEY, "");
+        return appsHashCache;
+    }
+
+    private void saveAppsHash(String hash) {
+        appsHashCache = hash;
+        prefs.edit().putString(APPS_HASH_KEY, hash).apply();
     }
 
     private String readAppsCache() {
@@ -605,7 +655,7 @@ public class MainActivity extends AppCompatActivity {
             Bitmap art = meta.getBitmap(MediaMetadata.METADATA_KEY_ART);
             if (art == null) art = meta.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
             if (art == null) return "";
-            int maxSize = 400;
+            int maxSize = 300;
             int w = art.getWidth(), h = art.getHeight();
             Bitmap scaled;
             if (w > maxSize || h > maxSize) {
@@ -615,7 +665,7 @@ public class MainActivity extends AppCompatActivity {
                 scaled = art;
             }
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            scaled.compress(Bitmap.CompressFormat.JPEG, 80, bos);
+            scaled.compress(Bitmap.CompressFormat.JPEG, 70, bos);
             return "data:image/jpeg;base64," + Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP);
         } catch (Exception e) { return ""; }
     }
