@@ -103,7 +103,7 @@ html, body {
 .settings-gear-btn svg { width: clamp(17px, 2.6vmin, 24px); height: clamp(17px, 2.6vmin, 24px); }
 
 /* ══ APPS AREA ══ */
-.apps-area { display: flex; align-items: center; justify-content: center; padding: 2vh 3vw; min-height: 0; }
+.apps-area { display: flex; align-items: center; justify-content: center; padding: 2vh 3vw; min-height: 0; position: relative; }
 .apps-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr);
   gap: clamp(8px, 1.5vmin, 20px); width: 100%; height: 100%;
@@ -588,6 +588,51 @@ html, body {
   display: block;
   transition: color 0.25s;
 }
+/* ══ CARD ENTRANCE ANIMATION ══ */
+@keyframes cardIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+
+/* ══ NOW PLAYING FULLSCREEN ══ */
+.np-view {
+  display:none; position:absolute; inset:0; z-index:5;
+  flex-direction:column; align-items:center; justify-content:center;
+  gap:2vh; background:var(--bg);
+}
+.np-view.active { display:flex; }
+.np-view-art {
+  width:min(36vh,55vw); height:min(36vh,55vw);
+  border-radius:clamp(10px,1.8vmin,18px); overflow:hidden;
+  background:var(--surface2); cursor:pointer; flex-shrink:0;
+  transition:transform 0.1s; box-shadow:0 8px 32px rgba(0,0,0,0.32);
+}
+.np-view-art:active { transform:scale(0.97); }
+.np-view-art img { width:100%; height:100%; object-fit:cover; opacity:1; }
+.np-view-title {
+  font-size:clamp(14px,2.4vh,22px); font-weight:500;
+  color:var(--text); text-align:center;
+  max-width:min(82%,52vw); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.np-view-controls { display:flex; align-items:center; gap:3vw; }
+.np-view-hint { font-size:clamp(9px,1.2vh,11px); color:var(--muted); margin-top:0.5vh; }
+
+/* ══ DRIVING MODE ══ */
+[data-driving="1"] .settings-gear-btn,
+[data-driving="1"] .sb-apps-btn,
+[data-driving="1"] .edit-btn { display:none; }
+[data-driving="1"] #speed-val { color:var(--c3); }
+
+/* ══ TOGGLE SWITCH ══ */
+.toggle-list { display:flex; flex-direction:column; }
+.toggle-row { display:flex; align-items:center; justify-content:space-between; padding:clamp(10px,1.5vh,14px) 0; border-bottom:1px solid var(--border); gap:2vw; }
+.toggle-row:last-child { border-bottom:0; }
+.toggle-info { flex:1; min-width:0; }
+.toggle-lbl { font-size:clamp(12px,1.7vh,15px); color:var(--text); }
+.toggle-sub { font-size:clamp(9px,1.2vh,11px); color:var(--muted); margin-top:0.3vh; line-height:1.3; }
+.toggle-sw { position:relative; width:clamp(40px,5.5vw,50px); height:clamp(22px,3.2vh,28px); flex-shrink:0; cursor:pointer; display:block; }
+.toggle-sw input { position:absolute; opacity:0; width:0; height:0; }
+.toggle-sw .knob { position:absolute; inset:0; background:var(--surface2); border:1px solid var(--border); border-radius:99px; transition:background 0.2s,border-color 0.2s; }
+.toggle-sw .knob::after { content:''; position:absolute; top:3px; left:3px; width:calc(clamp(22px,3.2vh,28px) - 8px); height:calc(clamp(22px,3.2vh,28px) - 8px); background:var(--muted); border-radius:50%; transition:transform 0.2s,background 0.2s; }
+.toggle-sw input:checked + .knob { background:color-mix(in srgb,var(--c1) 22%,transparent); border-color:var(--c1); }
+.toggle-sw input:checked + .knob::after { transform:translateX(18px); background:var(--c1); }
 </style>
 </head>
 <body>
@@ -627,6 +672,24 @@ html, body {
 
     <div class="apps-area">
       <div class="apps-grid" id="apps-grid"></div>
+      <div class="np-view" id="np-view">
+        <div class="np-view-art" onclick="toggleNowPlaying()">
+          <img id="np-view-img" src="" alt="">
+        </div>
+        <div class="np-view-title" id="np-view-title">Nessuna riproduzione</div>
+        <div class="np-view-controls">
+          <button class="mc-btn" onclick="mediaAction('prev')">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 16.811c0 .864-.933 1.406-1.683.977l-7.108-4.061a1.125 1.125 0 0 1 0-1.954l7.108-4.061A1.125 1.125 0 0 1 21 8.689v8.122ZM11.25 16.811c0 .864-.933 1.406-1.683.977l-7.108-4.061a1.125 1.125 0 0 1 0-1.954l7.108-4.061a1.125 1.125 0 0 1 1.683.977v8.122Z"/></svg>
+          </button>
+          <button class="mc-btn mc-play" id="np-mc-play" onclick="mediaAction('toggle')">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg>
+          </button>
+          <button class="mc-btn" onclick="mediaAction('next')">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061A1.125 1.125 0 0 1 3 16.811V8.69ZM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061a1.125 1.125 0 0 1-1.683-.977V8.69Z"/></svg>
+          </button>
+        </div>
+        <div class="np-view-hint">↙ tocca copertina per chiudere</div>
+      </div>
       <div class="clock-view" id="clock-view">
         <div class="cw-wrap" id="cw-wrap">
           <div class="cw-time-row" id="cw-time-row">
@@ -649,7 +712,7 @@ html, body {
 
       <!-- now playing -->
       <div class="now-playing">
-        <div class="album-art-wrap" id="album-art-wrap">
+        <div class="album-art-wrap" id="album-art-wrap" onclick="toggleNowPlaying()" style="cursor:pointer;">
           <div class="np-indicator paused" id="np-indicator">
             <div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div>
           </div>
@@ -807,6 +870,7 @@ html, body {
       <button class="stab-btn active" data-tab="tema"    onclick="switchSettingsTab('tema')">Tema</button>
       <button class="stab-btn"        data-tab="stile"   onclick="switchSettingsTab('stile')">Stile</button>
       <button class="stab-btn"        data-tab="display" onclick="switchSettingsTab('display')">Display</button>
+      <button class="stab-btn"        data-tab="extra"   onclick="switchSettingsTab('extra')">Extra</button>
     </div>
 
     <!-- TAB: TEMA -->
@@ -915,6 +979,63 @@ html, body {
       </div>
     </div>
 
+    <!-- TAB: EXTRA -->
+    <div class="settings-panel" id="sp-extra">
+      <div>
+        <div class="settings-label">Animazioni &amp; Colore</div>
+        <div class="toggle-list">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-lbl">Animazione schede</div>
+              <div class="toggle-sub">Ingresso a cascata ad ogni apertura</div>
+            </div>
+            <label class="toggle-sw"><input type="checkbox" id="tog-staggered" onchange="setStaggeredEntrance(this.checked)"><span class="knob"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-lbl">Colore ambiente album</div>
+              <div class="toggle-sub">L'accento UI segue il colore copertina</div>
+            </div>
+            <label class="toggle-sw"><input type="checkbox" id="tog-ambient" onchange="setAmbientColor(this.checked)"><span class="knob"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-lbl">Colore icone automatico</div>
+              <div class="toggle-sub">Accento estratto dall'icona dell'app per slot</div>
+            </div>
+            <label class="toggle-sw"><input type="checkbox" id="tog-autocolor" onchange="setAutoIconColor(this.checked)"><span class="knob"></span></label>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="settings-label">Riproduzione &amp; Guida</div>
+        <div class="toggle-list">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-lbl">Vista Now Playing</div>
+              <div class="toggle-sub">Tocca copertina per vista fullscreen</div>
+            </div>
+            <label class="toggle-sw"><input type="checkbox" id="tog-np" onchange="setNowPlayingExpand(this.checked)"><span class="knob"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-lbl">Modalità guida</div>
+              <div class="toggle-sub">Nasconde controlli sopra soglia velocità</div>
+            </div>
+            <label class="toggle-sw"><input type="checkbox" id="tog-driving" onchange="setDrivingMode(this.checked)"><span class="knob"></span></label>
+          </div>
+        </div>
+        <div style="margin-top:1.5vh;">
+          <div class="settings-label">Soglia modalità guida</div>
+          <div class="slider-row">
+            <label>Velocità</label>
+            <input type="range" id="driving-thresh-slider" min="10" max="80" step="5" value="30" oninput="onDrivingThreshold(this.value)">
+            <span class="slider-val" id="driving-thresh-val">30 km/h</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <button class="modal-close" onclick="closeSettingsModal()">Chiudi</button>
   </div>
 </div>
@@ -992,6 +1113,8 @@ const SETTINGS_DEFAULTS = {
   textScale: 1.0, iconScale: 1.0,
   brightnessDark: 0.5, brightnessLight: 0.9, brightnessMode: 'hardware',
   themeMode: 'manual', cardStyle: 'minimal',
+  staggeredEntrance: true, ambientColor: false, autoIconColor: false,
+  nowPlayingExpand: true, drivingMode: true, drivingThreshold: 30,
 };
 let settings = { ...SETTINGS_DEFAULTS };
 let autoThemeMq = null;
@@ -999,6 +1122,9 @@ let _sundialInterval = null;
 let _sundialCoords = null;
 let _filterTimer = null;
 let _clockEl, _dateEl;
+let npMode = false;
+let _drivingHysteresis = false;
+let _ambientColorHex = null;
 
 const DEFAULT_BUTTONS = [
   { id:'nav',      iconKey:'nav',      iconMode:'native', label:'Navigazione',  sub:'Waze · Maps',        color:'var(--c1)', apps:[{label:'Google Maps',pkg:'com.google.android.apps.maps'},{label:'Waze',pkg:'com.waze'}] },
@@ -1025,6 +1151,7 @@ window.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 10000);
   loadInstalledApps();
+  if (settings.autoIconColor) computeAutoIconColors();
   // initVolume fa una chiamata bridge sincrona non critica per il primo frame
   (window.requestIdleCallback || setTimeout)(initVolume, 200);
 });
@@ -1070,6 +1197,7 @@ window.onAppsReady = function(json) {
       const q = (document.getElementById('drawer-search')?.value || '').toLowerCase();
       renderDrawer(q);
     }
+    if (settings.autoIconColor) computeAutoIconColors();
   } catch(e) {}
 };
 
@@ -1084,6 +1212,87 @@ function hexToRgba(hex, alpha) {
   const h = (hex || '').replace('#', '');
   if (h.length < 6) return `rgba(128,128,128,${alpha})`;
   return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${alpha})`;
+}
+
+// ══ DOMINANT COLOR EXTRACTION ══
+function extractDominantColor(imgEl, cb) {
+  const canvas = document.createElement('canvas');
+  const size = 24;
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  try {
+    ctx.drawImage(imgEl, 0, 0, size, size);
+    const data = ctx.getImageData(0, 0, size, size).data;
+    let rSum = 0, gSum = 0, bSum = 0, wSum = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+      if (a < 20) continue;
+      const max = Math.max(r,g,b), min = Math.min(r,g,b);
+      const sat = max > 0 ? (max - min) / max : 0;
+      const w = (sat + 0.1) * (a / 255);
+      rSum += r * w; gSum += g * w; bSum += b * w; wSum += w;
+    }
+    if (!wSum) { cb(null); return; }
+    const toHex = v => Math.round(v / wSum).toString(16).padStart(2,'0');
+    cb('#' + toHex(rSum) + toHex(gSum) + toHex(bSum));
+  } catch(e) { cb(null); }
+}
+
+function applyAmbientColor(hex) {
+  _ambientColorHex = hex;
+  if (hex) {
+    document.documentElement.style.setProperty('--c1', hex);
+  } else {
+    const isDark = resolveIsDark(settings.theme);
+    const p = THEMES[settings.colorTheme]?.[isDark ? 'dark' : 'light'] || THEMES.default[isDark ? 'dark' : 'light'];
+    document.documentElement.style.setProperty('--c1', p.c1);
+  }
+}
+
+function computeAutoIconColors() {
+  if (!settings.autoIconColor) return;
+  let pending = 0;
+  buttons.forEach(btn => {
+    const app = btn.apps && btn.apps.find(a => a.pkg && !a.pkg.startsWith('__'));
+    const inst = app && installedApps.find(a => a.packageName === app.pkg);
+    if (inst && inst.icon) {
+      pending++;
+      const img = new Image();
+      img.onload = () => {
+        extractDominantColor(img, hex => {
+          if (hex) btn.autoColor = hex;
+          pending--;
+          if (pending === 0) renderGrid();
+        });
+      };
+      img.src = inst.icon;
+    } else {
+      delete btn.autoColor;
+    }
+  });
+  if (pending === 0) renderGrid();
+}
+
+// ══ NOW PLAYING FULLSCREEN ══
+function toggleNowPlaying() {
+  if (!settings.nowPlayingExpand) return;
+  npMode = !npMode;
+  const npView = document.getElementById('np-view');
+  const grid   = document.getElementById('apps-grid');
+  if (npMode) {
+    if (clockMode) toggleClockMode();
+    const src = document.getElementById('album-art-img').src;
+    const npImg = document.getElementById('np-view-img');
+    if (npImg) npImg.src = src;
+    const track = document.getElementById('np-track').textContent;
+    const npTitle = document.getElementById('np-view-title');
+    if (npTitle) npTitle.textContent = track;
+    grid.style.display = 'none';
+    npView.classList.add('active');
+  } else {
+    npView.classList.remove('active');
+    grid.style.display = '';
+  }
 }
 
 // ══ RENDER ══
@@ -1115,19 +1324,23 @@ function renderGrid() {
   const grid = document.getElementById('apps-grid');
   grid.innerHTML = '';
   const cs = settings.cardStyle || 'minimal';
+  const useAutoColor = settings.autoIconColor;
+  const stagger = settings.staggeredEntrance;
 
   buttons.forEach((btn, i) => {
     const card = document.createElement('div');
     card.className = 'app-card';
-    card.style.setProperty('--cc', btn.color);
 
-    let iconColor = btn.color;
-    let iconBg    = `${btn.color}18`;
+    const cardColor = (useAutoColor && btn.autoColor) ? btn.autoColor : btn.color;
+    card.style.setProperty('--cc', cardColor);
+
+    let iconColor = cardColor;
+    let iconBg    = `${cardColor}18`;
     let nameStyle = '';
     let subStyle  = '';
 
     if (cs !== 'minimal') {
-      const hex = resolveColor(btn.color);
+      const hex = resolveColor(cardColor);
       if (cs === 'tinted') {
         card.style.background  = hexToRgba(hex, 0.13);
         card.style.borderColor = hexToRgba(hex, 0.30);
@@ -1141,6 +1354,11 @@ function renderGrid() {
         nameStyle = ' style="color:#fff"';
         subStyle  = ' style="color:rgba(255,255,255,0.72)"';
       }
+    }
+
+    if (stagger) {
+      card.style.animation = 'cardIn 0.32s ease both';
+      card.style.animationDelay = (i * 55) + 'ms';
     }
 
     card.innerHTML = `
@@ -1447,14 +1665,29 @@ document.getElementById('settings-overlay').addEventListener('click', e => { if 
 document.getElementById('intent-overlay').addEventListener('click', e => { if (e.target === document.getElementById('intent-overlay')) closeIntentModal(); });
 
 // ══ GPS / MEDIA / CLOCK ══
-window.onGpsSpeed = kmh => { document.getElementById('speed-val').textContent = Math.round(kmh); };
+window.onGpsSpeed = kmh => {
+  const rounded = Math.round(kmh);
+  document.getElementById('speed-val').textContent = rounded;
+  if (settings.drivingMode) {
+    const thresh = settings.drivingThreshold || 30;
+    if (!_drivingHysteresis && rounded >= thresh) {
+      _drivingHysteresis = true;
+      document.documentElement.setAttribute('data-driving', '1');
+    } else if (_drivingHysteresis && rounded < Math.max(5, thresh - 5)) {
+      _drivingHysteresis = false;
+      document.documentElement.removeAttribute('data-driving');
+    }
+  }
+};
 
 window.onMediaUpdate = track => {
-  const el  = document.getElementById('np-track');
-  const ind = document.getElementById('np-indicator');
+  const el      = document.getElementById('np-track');
+  const ind     = document.getElementById('np-indicator');
+  const npTitle = document.getElementById('np-view-title');
   el.classList.remove('marquee');
   if (track) {
     el.textContent = track;
+    if (npTitle) npTitle.textContent = track;
     ind.classList.remove('paused');
     requestAnimationFrame(() => {
       if (el.scrollWidth > el.clientWidth) {
@@ -1465,27 +1698,38 @@ window.onMediaUpdate = track => {
     });
   } else {
     el.textContent = 'Nessuna riproduzione';
+    if (npTitle) npTitle.textContent = 'Nessuna riproduzione';
     ind.classList.add('paused');
   }
 };
 
 window.onPlaybackState = playing => {
-  const btn = document.getElementById('mc-play');
-  if (!btn) return;
-  btn.innerHTML = playing
-    ? `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5"/></svg>`
-    : `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg>`;
+  const svgPause = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5"/></svg>`;
+  const svgPlay  = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg>`;
+  const btn   = document.getElementById('mc-play');
+  const npBtn = document.getElementById('np-mc-play');
+  if (btn)   btn.innerHTML   = playing ? svgPause : svgPlay;
+  if (npBtn) npBtn.innerHTML = playing ? svgPause : svgPlay;
 };
 
 window.onAlbumArt = artData => {
-  const wrap = document.getElementById('album-art-wrap');
-  const img  = document.getElementById('album-art-img');
+  const wrap  = document.getElementById('album-art-wrap');
+  const img   = document.getElementById('album-art-img');
+  const npImg = document.getElementById('np-view-img');
   if (artData && artData.length > 10) {
     img.src = artData;
+    if (npImg) npImg.src = artData;
     wrap.classList.add('has-art');
+    if (settings.ambientColor) {
+      const doExtract = () => extractDominantColor(img, hex => { if (hex) applyAmbientColor(hex); });
+      if (img.complete && img.naturalWidth) doExtract();
+      else img.onload = doExtract;
+    }
   } else {
     wrap.classList.remove('has-art');
     img.src = '';
+    if (npImg) npImg.src = '';
+    if (settings.ambientColor) applyAmbientColor(null);
   }
 };
 
@@ -1566,6 +1810,8 @@ function applyAllSettings() {
   document.documentElement.style.setProperty('--ts', settings.textScale);
   document.documentElement.style.setProperty('--is', settings.iconScale);
   applyBrightness(isDark ? settings.brightnessDark : settings.brightnessLight);
+  const wrap = document.getElementById('album-art-wrap');
+  if (wrap) wrap.style.cursor = (settings.nowPlayingExpand !== false) ? 'pointer' : '';
 }
 
 function resolveIsDark(theme) {
@@ -1583,7 +1829,8 @@ function applyColorPalette(colorTheme, isDark) {
   r.style.setProperty('--border',  p.border);
   r.style.setProperty('--text',    p.text);
   r.style.setProperty('--muted',   p.muted);
-  r.style.setProperty('--c1', p.c1); r.style.setProperty('--c2', p.c2);
+  r.style.setProperty('--c1', (settings.ambientColor && _ambientColorHex) ? _ambientColorHex : p.c1);
+  r.style.setProperty('--c2', p.c2);
   r.style.setProperty('--c3', p.c3); r.style.setProperty('--c4', p.c4);
   r.style.setProperty('--c5', p.c5); r.style.setProperty('--c6', p.c6);
   r.style.setProperty('--hover-border', isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)');
@@ -1854,6 +2101,15 @@ function openSettingsModal() {
   document.getElementById('bd-val').textContent = Math.round(settings.brightnessDark * 100) + '%';
   const bl = document.getElementById('bl-slider'); bl.value = Math.round(settings.brightnessLight * 100);
   document.getElementById('bl-val').textContent = Math.round(settings.brightnessLight * 100) + '%';
+  // Extra tab
+  document.getElementById('tog-staggered').checked = !!settings.staggeredEntrance;
+  document.getElementById('tog-ambient').checked   = !!settings.ambientColor;
+  document.getElementById('tog-autocolor').checked = !!settings.autoIconColor;
+  document.getElementById('tog-np').checked        = settings.nowPlayingExpand !== false;
+  document.getElementById('tog-driving').checked   = !!settings.drivingMode;
+  const dts = document.getElementById('driving-thresh-slider');
+  dts.value = settings.drivingThreshold || 30;
+  document.getElementById('driving-thresh-val').textContent = (settings.drivingThreshold || 30) + ' km/h';
   el.classList.add('open');
 }
 
@@ -1865,12 +2121,65 @@ function closeSettingsModal() {
 }
 
 window.closeTopOverlay = function() {
+  if (npMode) { toggleNowPlaying(); return true; }
   if (document.getElementById('drawer-overlay').classList.contains('open'))   { closeDrawer();        return true; }
   if (document.getElementById('settings-overlay').classList.contains('open')) { closeSettingsModal(); return true; }
   if (document.getElementById('picker-overlay').classList.contains('open'))   { closePicker();        return true; }
   if (document.getElementById('launch-overlay').classList.contains('open'))   { closeLaunch();        return true; }
   return false;
 };
+
+// ══ EXTRA FEATURE SETTERS ══
+function setStaggeredEntrance(on) {
+  settings.staggeredEntrance = on;
+  renderGrid();
+}
+
+function setAmbientColor(on) {
+  settings.ambientColor = on;
+  if (!on) {
+    applyAmbientColor(null);
+  } else {
+    const img = document.getElementById('album-art-img');
+    if (img && img.src && img.complete && img.naturalWidth) {
+      extractDominantColor(img, hex => { if (hex) applyAmbientColor(hex); });
+    }
+  }
+}
+
+function setAutoIconColor(on) {
+  settings.autoIconColor = on;
+  if (on) {
+    computeAutoIconColors();
+  } else {
+    buttons.forEach(b => delete b.autoColor);
+    renderGrid();
+  }
+}
+
+function setNowPlayingExpand(on) {
+  settings.nowPlayingExpand = on;
+  const wrap = document.getElementById('album-art-wrap');
+  if (wrap) wrap.style.cursor = on ? 'pointer' : '';
+  if (!on && npMode) {
+    npMode = false;
+    document.getElementById('np-view').classList.remove('active');
+    document.getElementById('apps-grid').style.display = '';
+  }
+}
+
+function setDrivingMode(on) {
+  settings.drivingMode = on;
+  if (!on) {
+    _drivingHysteresis = false;
+    document.documentElement.removeAttribute('data-driving');
+  }
+}
+
+function onDrivingThreshold(v) {
+  settings.drivingThreshold = parseInt(v);
+  document.getElementById('driving-thresh-val').textContent = v + ' km/h';
+}
 
 // ══ CLOCK VIEW ══
 let clockMode = false;
@@ -1962,6 +2271,7 @@ function toggleClockMode() {
   const btn       = document.getElementById('sb-mode-btn');
 
   if (clockMode) {
+    if (npMode) { npMode = false; document.getElementById('np-view').classList.remove('active'); }
     grid.style.display = 'none';
     clockView.classList.add('active');
     btn.classList.add('clock-active');
