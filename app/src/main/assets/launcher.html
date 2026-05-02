@@ -1090,6 +1090,20 @@ html, body {
     <!-- TAB: DISPLAY -->
     <div class="settings-panel" id="sp-display">
       <div>
+        <div class="settings-label">Luminosità sistema</div>
+        <div class="toggle-list">
+          <div class="toggle-row" id="perm-brightness-row">
+            <div class="toggle-info">
+              <div class="toggle-lbl" style="display:flex;align-items:center;">
+                <span class="perm-status-dot bad" id="perm-bright-dot"></span>Controllo luminosità globale
+              </div>
+              <div class="toggle-sub" id="perm-bright-sub">Bypassa il limite hardware dell&apos;autoradio</div>
+            </div>
+            <button class="perm-enable-btn bad" id="perm-bright-btn" onclick="requestWriteSettingsPermission()">Abilita</button>
+          </div>
+        </div>
+      </div>
+      <div>
         <div class="settings-label">Controllo luminosità</div>
         <div class="seg-btns">
           <button class="seg-btn active-warm active" data-bmode="hardware" onclick="setBrightnessMode('hardware')">💡 Hardware</button>
@@ -1930,6 +1944,32 @@ function _updateMediaPermUI(enabled) {
   }
 }
 
+function requestWriteSettingsPermission() {
+  try { Android.requestWriteSettings(); } catch(e) {}
+}
+
+function _updateBrightPermUI(enabled) {
+  const dot = document.getElementById('perm-bright-dot');
+  const btn = document.getElementById('perm-bright-btn');
+  const sub = document.getElementById('perm-bright-sub');
+  if (!dot) return;
+  if (enabled) {
+    dot.className = 'perm-status-dot ok';
+    btn.className = 'perm-enable-btn ok';
+    btn.textContent = 'Abilitato';
+    btn.onclick = null;
+    if (sub) sub.textContent = 'Luminosità sistema controllata direttamente';
+  } else {
+    dot.className = 'perm-status-dot bad';
+    btn.className = 'perm-enable-btn bad';
+    btn.textContent = 'Abilita';
+    btn.onclick = requestWriteSettingsPermission;
+    if (sub) sub.textContent = 'Bypassa il limite hardware dell\'autoradio';
+  }
+}
+
+window.onWriteSettingsStatus = enabled => _updateBrightPermUI(enabled);
+
 window.onNotificationListenerStatus = enabled => {
   _updateMediaPermUI(enabled);
 };
@@ -2291,6 +2331,7 @@ function openSettingsModal() {
   const el = document.getElementById('settings-overlay');
   el.style.willChange = 'opacity';
   switchSettingsTab('tema');
+  try { _updateBrightPermUI(Android.canControlSystemBrightness()); } catch(e) {}
   // sync all controls to current settings
   document.querySelectorAll('.theme-chip').forEach(b => b.classList.toggle('active', b.dataset.ct === settings.colorTheme));
   document.querySelectorAll('[data-tmode]').forEach(b => b.classList.toggle('active', b.dataset.tmode === settings.themeMode));

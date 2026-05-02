@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.provider.Settings;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -125,6 +126,9 @@ public class MainActivity extends AppCompatActivity {
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         );
         reapplyBrightnessFromSettings();
+        boolean canWrite = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.System.canWrite(this);
+        webView.post(() -> webView.evaluateJavascript(
+            "if(window.onWriteSettingsStatus) window.onWriteSettingsStatus(" + canWrite + ");", null));
     }
 
     private void reapplyBrightnessFromSettings() {
@@ -185,8 +189,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 boolean enabled = isNotificationListenerEnabledInternal();
-                view.postDelayed(() -> view.evaluateJavascript(
-                    "if(window.onNotificationListenerStatus) window.onNotificationListenerStatus(" + enabled + ");", null), 600);
+                boolean canWrite = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.System.canWrite(MainActivity.this);
+                view.postDelayed(() -> {
+                    view.evaluateJavascript(
+                        "if(window.onNotificationListenerStatus) window.onNotificationListenerStatus(" + enabled + ");", null);
+                    view.evaluateJavascript(
+                        "if(window.onWriteSettingsStatus) window.onWriteSettingsStatus(" + canWrite + ");", null);
+                }, 600);
             }
         });
 
@@ -365,11 +374,38 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public void setScreenBrightness(float brightness) {
+            float clamped = Math.max(0.01f, Math.min(1.0f, brightness));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.System.canWrite(MainActivity.this)) {
+                Settings.System.putInt(getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS_MODE,
+                    Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+                Settings.System.putInt(getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS,
+                    Math.round(clamped * 255));
+            }
             runOnUiThread(() -> {
                 WindowManager.LayoutParams lp = getWindow().getAttributes();
-                lp.screenBrightness = Math.max(0.01f, Math.min(1.0f, brightness));
+                lp.screenBrightness = clamped;
                 getWindow().setAttributes(lp);
             });
+        }
+
+        @JavascriptInterface
+        public boolean canControlSystemBrightness() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                return Settings.System.canWrite(MainActivity.this);
+            }
+            return true;
+        }
+
+        @JavascriptInterface
+        public void requestWriteSettings() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.System.canWrite(MainActivity.this)) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS,
+                    Uri.parse("package:" + getPackageName()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
         }
 
         @JavascriptInterface
