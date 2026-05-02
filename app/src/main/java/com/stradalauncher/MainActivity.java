@@ -5,7 +5,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
@@ -16,7 +15,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
-import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
 import android.os.Build;
@@ -64,7 +62,8 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private LocationManager locationManager;
     private SharedPreferences prefs;
-    private final ExecutorService bgExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService appsExecutor  = Executors.newSingleThreadExecutor();
+    private final ExecutorService mediaExecutor = Executors.newSingleThreadExecutor();
     private BroadcastReceiver packageReceiver;
     private MediaSessionManager msmCached;
     private volatile String appsJsonMemCache = null;
@@ -180,13 +179,12 @@ public class MainActivity extends AppCompatActivity {
         packageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                bgExecutor.execute(() -> refreshAppsCache());
+                appsExecutor.execute(() -> refreshAppsCache());
             }
         };
         IntentFilter f = new IntentFilter();
         f.addAction(Intent.ACTION_PACKAGE_ADDED);
         f.addAction(Intent.ACTION_PACKAGE_REMOVED);
-        f.addAction(Intent.ACTION_PACKAGE_CHANGED);
         f.addDataScheme("package");
         registerReceiver(packageReceiver, f);
     }
@@ -197,7 +195,8 @@ public class MainActivity extends AppCompatActivity {
         if (packageReceiver != null) {
             try { unregisterReceiver(packageReceiver); } catch (Exception ignored) {}
         }
-        bgExecutor.shutdown();
+        appsExecutor.shutdown();
+        mediaExecutor.shutdown();
     }
 
     // ─── JAVASCRIPT BRIDGE ───────────────────────────────────────────────────
@@ -211,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public String getInstalledApps() {
             String cached = appsJsonMemCache != null ? appsJsonMemCache : readAppsCache();
-            bgExecutor.execute(() -> refreshAppsCache());
+            appsExecutor.execute(() -> refreshAppsCache());
             return cached.isEmpty() ? "[]" : cached;
         }
 
@@ -285,6 +284,7 @@ public class MainActivity extends AppCompatActivity {
         public void mediaAction(String action) {
             try {
                 MediaSessionManager msm = msmCached;
+                if (msm == null) return;
                 ComponentName cn = new ComponentName(MainActivity.this, MediaListenerService.class);
                 List<MediaController> controllers = msm.getActiveSessions(cn);
                 if (controllers.isEmpty()) return;
@@ -521,15 +521,16 @@ public class MainActivity extends AppCompatActivity {
         mediaHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                bgExecutor.execute(() -> pollMediaSession());
+                mediaExecutor.execute(() -> pollMediaSession());
                 mediaHandler.postDelayed(this, 2000);
             }
-        }, 2000);
+        }, 500);
     }
 
     private void pollMediaSession() {
         try {
             MediaSessionManager msm = msmCached;
+            if (msm == null) return;
             ComponentName cn = new ComponentName(MainActivity.this, MediaListenerService.class);
             List<MediaController> controllers = msm.getActiveSessions(cn);
 
@@ -597,7 +598,7 @@ public class MainActivity extends AppCompatActivity {
     // ─── BACK BUTTON ─────────────────────────────────────────────────────────
     @Override
     public void onBackPressed() {
-        // Il launcher non deve tornare indietro — rimane fermo
-        // (opzionale: potresti mostrare un menu)
+        webView.evaluateJavascript(
+            "window.closeTopOverlay ? window.closeTopOverlay() : false", null);
     }
 }

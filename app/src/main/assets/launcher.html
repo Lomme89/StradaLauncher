@@ -202,7 +202,7 @@ html, body {
   background: rgba(0,0,0,0.86);
   z-index: 50; display: flex; align-items: center; justify-content: center;
   opacity: 0; pointer-events: none; transition: opacity 0.15s;
-  visibility: hidden; will-change: opacity;
+  visibility: hidden;
 }
 .overlay.open { opacity: 1; pointer-events: all; visibility: visible; }
 .modal {
@@ -459,7 +459,7 @@ html, body {
   opacity: 0; pointer-events: none;
   transform: translateX(-10px);
   transition: opacity 0.18s, transform 0.18s;
-  visibility: hidden; will-change: opacity, transform;
+  visibility: hidden;
 }
 .drawer-overlay.open { opacity: 1; pointer-events: all; transform: translateX(0); visibility: visible; }
 .drawer-header {
@@ -1169,6 +1169,8 @@ function launchPkg(pkg) {
 
 // ══ LAUNCH MODAL ══
 function openLaunch(btn) {
+  const el = document.getElementById('launch-overlay');
+  el.style.willChange = 'opacity';
   document.getElementById('launch-title').textContent = btn.label;
   document.getElementById('launch-sub').textContent = 'Scegli come aprire';
   const list = document.getElementById('launch-list');
@@ -1183,9 +1185,13 @@ function openLaunch(btn) {
     row.onclick = () => { closeLaunch(); launchPkg(app.pkg); };
     list.appendChild(row);
   });
-  document.getElementById('launch-overlay').classList.add('open');
+  el.classList.add('open');
 }
-function closeLaunch() { document.getElementById('launch-overlay').classList.remove('open'); }
+function closeLaunch() {
+  const el = document.getElementById('launch-overlay');
+  el.classList.remove('open');
+  setTimeout(() => { el.style.willChange = ''; }, 180);
+}
 
 // ══ EDIT MODE ══
 function toggleEditMode() {
@@ -1197,6 +1203,8 @@ function toggleEditMode() {
 // ══ PICKER ══
 function openPicker(i, e) {
   e.stopPropagation();
+  const el = document.getElementById('picker-overlay');
+  el.style.willChange = 'opacity';
   pickerSlotIndex = i;
   document.getElementById('picker-title').textContent = 'Pulsante ' + (i+1);
   document.getElementById('label-edit-title').value = buttons[i].label;
@@ -1204,7 +1212,7 @@ function openPicker(i, e) {
   syncIconModeControls(buttons[i].iconMode || 'native');
   document.getElementById('picker-search').value = '';
   renderPickerList('');
-  document.getElementById('picker-overlay').classList.add('open');
+  el.classList.add('open');
   _updateIntentBadge();
 }
 
@@ -1217,7 +1225,12 @@ function saveLabelEdit() {
   buttons[pickerSlotIndex].iconMode = getSelectedIconMode();
   saveConfig(); renderGrid();
 }
-function closePicker()      { document.getElementById('picker-overlay').classList.remove('open'); pickerSlotIndex = -1; }
+function closePicker() {
+  const el = document.getElementById('picker-overlay');
+  el.classList.remove('open');
+  setTimeout(() => { el.style.willChange = ''; }, 180);
+  pickerSlotIndex = -1;
+}
 function filterPicker(q)    { renderPickerList(q.toLowerCase()); }
 
 function getSelectedIconMode() {
@@ -1749,13 +1762,17 @@ function onBrightnessLight(v) {
 
 // ══ APP DRAWER ══
 function openDrawer() {
+  const el = document.getElementById('drawer-overlay');
+  el.style.willChange = 'opacity, transform';
   document.getElementById('drawer-search').value = '';
   renderDrawer('');
-  document.getElementById('drawer-overlay').classList.add('open');
+  el.classList.add('open');
 }
 
 function closeDrawer() {
-  document.getElementById('drawer-overlay').classList.remove('open');
+  const el = document.getElementById('drawer-overlay');
+  el.classList.remove('open');
+  setTimeout(() => { el.style.willChange = ''; }, 200);
 }
 
 function filterDrawer(q) {
@@ -1797,6 +1814,8 @@ function switchSettingsTab(id) {
 
 // ══ SETTINGS MODAL ══
 function openSettingsModal() {
+  const el = document.getElementById('settings-overlay');
+  el.style.willChange = 'opacity';
   switchSettingsTab('tema');
   // sync all controls to current settings
   document.querySelectorAll('.theme-chip').forEach(b => b.classList.toggle('active', b.dataset.ct === settings.colorTheme));
@@ -1818,13 +1837,23 @@ function openSettingsModal() {
   document.getElementById('bd-val').textContent = Math.round(settings.brightnessDark * 100) + '%';
   const bl = document.getElementById('bl-slider'); bl.value = Math.round(settings.brightnessLight * 100);
   document.getElementById('bl-val').textContent = Math.round(settings.brightnessLight * 100) + '%';
-  document.getElementById('settings-overlay').classList.add('open');
+  el.classList.add('open');
 }
 
 function closeSettingsModal() {
+  const el = document.getElementById('settings-overlay');
   saveSettingsToDevice();
-  document.getElementById('settings-overlay').classList.remove('open');
+  el.classList.remove('open');
+  setTimeout(() => { el.style.willChange = ''; }, 180);
 }
+
+window.closeTopOverlay = function() {
+  if (document.getElementById('drawer-overlay').classList.contains('open'))   { closeDrawer();        return true; }
+  if (document.getElementById('settings-overlay').classList.contains('open')) { closeSettingsModal(); return true; }
+  if (document.getElementById('picker-overlay').classList.contains('open'))   { closePicker();        return true; }
+  if (document.getElementById('launch-overlay').classList.contains('open'))   { closeLaunch();        return true; }
+  return false;
+};
 
 // ══ CLOCK VIEW ══
 let clockMode = false;
