@@ -666,6 +666,14 @@ html, body {
 }
 .np-view-left:active { transform:scale(0.98); }
 .np-view-left img { width:100%; height:100%; object-fit:cover; display:block; }
+.np-view-left.no-art { display:flex; align-items:center; justify-content:center; }
+.np-view-left.no-art img { display:none; }
+.np-view-left.no-art::after {
+  content:"";
+  width:38%; height:38%;
+  opacity:0.18;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M19.952 1.651a.75.75 0 0 1 .298.599V16.303a3 3 0 0 1-2.176 2.884l-1.32.377a2.553 2.553 0 1 1-1.403-4.909l2.311-.66a1.5 1.5 0 0 0 1.088-1.442V6.994l-9 2.572V21a3 3 0 0 1-2.176 2.884l-1.32.377a2.553 2.553 0 1 1-1.402-4.909l2.31-.66A1.5 1.5 0 0 0 8.25 17.25V4.25a.75.75 0 0 1 .544-.721l10.5-3a.75.75 0 0 1 .658.122Z"/></svg>') center/contain no-repeat;
+}
 .np-view-right {
   flex:1; min-width:0; display:flex; flex-direction:column;
   justify-content:center; gap:clamp(12px,2.2vh,28px);
@@ -784,7 +792,7 @@ html, body {
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         <!-- left: album art -->
-        <div class="np-view-left" onclick="toggleNowPlaying()">
+        <div class="np-view-left no-art" id="np-view-left" onclick="toggleNowPlaying()">
           <img id="np-view-img" src="" alt="">
         </div>
         <!-- right: info + controls -->
@@ -1878,7 +1886,7 @@ window.onAlbumArt = artData => {
   const npImg = document.getElementById('np-view-img');
   if (artData && artData.length > 10) {
     img.src = artData;
-    if (npImg) npImg.src = artData;
+    if (npImg) { npImg.src = artData; document.getElementById('np-view-left')?.classList.remove('no-art'); }
     wrap.classList.add('has-art');
     if (settings.ambientColor) {
       const doExtract = () => extractDominantColor(img, hex => { if (hex) applyAmbientColor(hex); });
@@ -1888,7 +1896,7 @@ window.onAlbumArt = artData => {
   } else {
     wrap.classList.remove('has-art');
     img.removeAttribute('src');
-    if (npImg) npImg.removeAttribute('src');
+    if (npImg) { npImg.removeAttribute('src'); document.getElementById('np-view-left')?.classList.add('no-art'); }
     if (settings.ambientColor) applyAmbientColor(null);
   }
 };
