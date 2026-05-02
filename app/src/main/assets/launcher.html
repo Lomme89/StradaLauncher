@@ -1021,7 +1021,8 @@ window.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 10000);
   loadInstalledApps();
-  initVolume();
+  // initVolume fa una chiamata bridge sincrona non critica per il primo frame
+  (window.requestIdleCallback || setTimeout)(initVolume, 200);
 });
 
 // ══ BUTTON CONFIG ══

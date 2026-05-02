@@ -41,6 +41,7 @@ import android.webkit.WebViewClient;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -49,13 +50,16 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "CarLauncher";
     private static final int PERM_LOCATION = 100;
-    private static final String APPS_CACHE_KEY = "apps_cache";
+    private static final String APPS_CACHE_FILE = "apps_cache.json";
 
     private WebView webView;
     private LocationManager locationManager;
@@ -152,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override
+            @RequiresApi(Build.VERSION_CODES.O)
             public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
                 Log.w(TAG, "WebView render process gone, reloading");
                 view.loadUrl("file:///android_asset/launcher.html");
@@ -197,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public String getInstalledApps() {
-            String cached = prefs.getString(APPS_CACHE_KEY, "");
+            String cached = readAppsCache();
             bgExecutor.execute(() -> refreshAppsCache());
             return cached.isEmpty() ? "[]" : cached;
         }
@@ -399,7 +404,7 @@ public class MainActivity extends AppCompatActivity {
     private void refreshAppsCache() {
         try {
             String json = buildAppsJson();
-            prefs.edit().putString(APPS_CACHE_KEY, json).apply();
+            writeAppsCache(json);
             final String js = "if(window.onAppsReady) window.onAppsReady(" + json + ");";
             webView.post(() -> webView.evaluateJavascript(js, null));
         } catch (Exception e) {
@@ -420,16 +425,13 @@ public class MainActivity extends AppCompatActivity {
             obj.put("packageName", info.activityInfo.packageName);
             try {
                 Drawable d = info.loadIcon(pm);
-                Bitmap bmp = Bitmap.createBitmap(
-                    d.getIntrinsicWidth() > 0 ? d.getIntrinsicWidth() : 96,
-                    d.getIntrinsicHeight() > 0 ? d.getIntrinsicHeight() : 96,
-                    Bitmap.Config.ARGB_8888);
+                Bitmap bmp = Bitmap.createBitmap(48, 48, Bitmap.Config.ARGB_8888);
                 Canvas c = new Canvas(bmp);
-                d.setBounds(0, 0, c.getWidth(), c.getHeight());
+                d.setBounds(0, 0, 48, 48);
                 d.draw(c);
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                bmp.compress(Bitmap.CompressFormat.PNG, 80, bos);
-                obj.put("icon", "data:image/png;base64," +
+                bmp.compress(Bitmap.CompressFormat.JPEG, 60, bos);
+                obj.put("icon", "data:image/jpeg;base64," +
                     Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP));
             } catch (Exception ignored) {
                 obj.put("icon", "");
@@ -437,6 +439,31 @@ public class MainActivity extends AppCompatActivity {
             arr.put(obj);
         }
         return arr.toString();
+    }
+
+    private String readAppsCache() {
+        try {
+            File f = new File(getFilesDir(), APPS_CACHE_FILE);
+            if (!f.exists()) return "";
+            FileInputStream fis = new FileInputStream(f);
+            byte[] data = new byte[(int) f.length()];
+            fis.read(data);
+            fis.close();
+            return new String(data, "UTF-8");
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private void writeAppsCache(String json) {
+        try {
+            File f = new File(getFilesDir(), APPS_CACHE_FILE);
+            FileOutputStream fos = new FileOutputStream(f);
+            fos.write(json.getBytes("UTF-8"));
+            fos.close();
+        } catch (Exception e) {
+            Log.e(TAG, "writeAppsCache error", e);
+        }
     }
 
     // ─── GPS ─────────────────────────────────────────────────────────────────
