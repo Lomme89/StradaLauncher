@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Car Launcher</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&family=Nunito:wght@300;400;500&family=Orbitron:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&family=Nunito:wght@300;400;500&family=Orbitron:wght@500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -202,9 +202,9 @@ html, body {
   background: rgba(0,0,0,0.86);
   z-index: 50; display: flex; align-items: center; justify-content: center;
   opacity: 0; pointer-events: none; transition: opacity 0.15s;
-  will-change: opacity;
+  visibility: hidden; will-change: opacity;
 }
-.overlay.open { opacity: 1; pointer-events: all; }
+.overlay.open { opacity: 1; pointer-events: all; visibility: visible; }
 .modal {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: clamp(12px, 2vmin, 20px);
@@ -459,9 +459,9 @@ html, body {
   opacity: 0; pointer-events: none;
   transform: translateX(-10px);
   transition: opacity 0.18s, transform 0.18s;
-  will-change: opacity, transform;
+  visibility: hidden; will-change: opacity, transform;
 }
-.drawer-overlay.open { opacity: 1; pointer-events: all; transform: translateX(0); }
+.drawer-overlay.open { opacity: 1; pointer-events: all; transform: translateX(0); visibility: visible; }
 .drawer-header {
   display: flex; align-items: center; gap: 2vw;
   padding: 1.5vh 3vw;
@@ -1771,7 +1771,8 @@ function renderDrawer(q) {
     grid.innerHTML = '<div class="drawer-empty">Nessuna app trovata</div>';
     return;
   }
-  filtered.forEach(app => {
+  const visible = filtered.slice(0, 80);
+  visible.forEach(app => {
     const el = document.createElement('div');
     el.className = 'drawer-app';
     el.innerHTML = `
@@ -1780,6 +1781,12 @@ function renderDrawer(q) {
     el.onclick = () => { closeDrawer(); launchPkg(app.packageName); };
     grid.appendChild(el);
   });
+  if (filtered.length > 80) {
+    const more = document.createElement('div');
+    more.className = 'drawer-empty';
+    more.textContent = `Cerca per filtrare (${filtered.length - 80} nascoste)`;
+    grid.appendChild(more);
+  }
 }
 
 // ══ SETTINGS TABS ══

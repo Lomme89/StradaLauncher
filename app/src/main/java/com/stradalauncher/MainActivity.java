@@ -66,6 +66,9 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences prefs;
     private final ExecutorService bgExecutor = Executors.newSingleThreadExecutor();
     private BroadcastReceiver packageReceiver;
+    private MediaSessionManager msmCached;
+    private volatile String appsJsonMemCache = null;
+    private volatile float cachedBrightness = -1f;
 
     // ─── LOCATION LISTENER ───────────────────────────────────────────────────
     private final LocationListener locationListener = new LocationListener() {
@@ -99,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
         prefs = getSharedPreferences("CarLauncherPrefs", Context.MODE_PRIVATE);
         webView = findViewById(R.id.webview);
+        msmCached = (MediaSessionManager) getSystemService(Context.MEDIA_SESSION_SERVICE);
 
         setupWebView();
         requestLocationPermission();
@@ -118,9 +122,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void reapplyBrightnessFromSettings() {
-        try {
+        if (cachedBrightness < 0) {
             String json = prefs.getString("app_settings", "");
-            if (json == null || json.length() <= 2) return;
+            if (json != null && json.length() > 2) updateBrightnessCache(json);
+            if (cachedBrightness < 0) return;
+        }
+        WindowManager.LayoutParams lp = getWindow().getAttributes();
+        lp.screenBrightness = Math.max(0.01f, Math.min(1.0f, cachedBrightness));
+        getWindow().setAttributes(lp);
+    }
+
+    private void updateBrightnessCache(String json) {
+        try {
             JSONObject s = new JSONObject(json);
             String theme = s.optString("theme", "dark");
             boolean isDark;
@@ -130,14 +143,9 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 isDark = !"light".equals(theme);
             }
-            float brightness = (float) s.optDouble(isDark ? "brightnessDark" : "brightnessLight",
-                                                    isDark ? 0.5 : 0.9);
-            WindowManager.LayoutParams lp = getWindow().getAttributes();
-            lp.screenBrightness = Math.max(0.01f, Math.min(1.0f, brightness));
-            getWindow().setAttributes(lp);
-        } catch (Exception e) {
-            Log.e(TAG, "reapplyBrightness error", e);
-        }
+            cachedBrightness = (float) s.optDouble(
+                isDark ? "brightnessDark" : "brightnessLight", isDark ? 0.5 : 0.9);
+        } catch (Exception ignored) {}
     }
 
     // ─── WEBVIEW SETUP ───────────────────────────────────────────────────────
@@ -202,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public String getInstalledApps() {
-            String cached = readAppsCache();
+            String cached = appsJsonMemCache != null ? appsJsonMemCache : readAppsCache();
             bgExecutor.execute(() -> refreshAppsCache());
             return cached.isEmpty() ? "[]" : cached;
         }
@@ -276,8 +284,7 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void mediaAction(String action) {
             try {
-                MediaSessionManager msm = (MediaSessionManager)
-                    getSystemService(Context.MEDIA_SESSION_SERVICE);
+                MediaSessionManager msm = msmCached;
                 ComponentName cn = new ComponentName(MainActivity.this, MediaListenerService.class);
                 List<MediaController> controllers = msm.getActiveSessions(cn);
                 if (controllers.isEmpty()) return;
@@ -327,6 +334,7 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void saveSettings(String json) {
             prefs.edit().putString("app_settings", json).apply();
+            updateBrightnessCache(json);
         }
 
         @JavascriptInterface
@@ -404,6 +412,7 @@ public class MainActivity extends AppCompatActivity {
     private void refreshAppsCache() {
         try {
             String json = buildAppsJson();
+            appsJsonMemCache = json;
             writeAppsCache(json);
             final String js = "if(window.onAppsReady) window.onAppsReady(" + json + ");";
             webView.post(() -> webView.evaluateJavascript(js, null));
@@ -512,7 +521,7 @@ public class MainActivity extends AppCompatActivity {
         mediaHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                pollMediaSession();
+                bgExecutor.execute(() -> pollMediaSession());
                 mediaHandler.postDelayed(this, 2000);
             }
         }, 2000);
@@ -520,8 +529,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void pollMediaSession() {
         try {
-            MediaSessionManager msm = (MediaSessionManager)
-                getSystemService(Context.MEDIA_SESSION_SERVICE);
+            MediaSessionManager msm = msmCached;
             ComponentName cn = new ComponentName(MainActivity.this, MediaListenerService.class);
             List<MediaController> controllers = msm.getActiveSessions(cn);
 
