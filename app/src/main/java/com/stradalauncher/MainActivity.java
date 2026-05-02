@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -197,6 +198,8 @@ public class MainActivity extends AppCompatActivity {
         packageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                Uri data = intent.getData();
+                if (data != null && getPackageName().equals(data.getSchemeSpecificPart())) return;
                 appsExecutor.execute(() -> refreshAppsCache());
             }
         };
