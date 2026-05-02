@@ -147,7 +147,7 @@ html, body {
   transition: width 0.2s, height 0.2s;
 }
 .app-icon svg { width: calc(clamp(18px, 2.8vmin, 28px) * var(--is)); height: calc(clamp(18px, 2.8vmin, 28px) * var(--is)); }
-.app-icon img  { width: calc(clamp(20px, 3vmin, 32px) * var(--is)); height: calc(clamp(20px, 3vmin, 32px) * var(--is)); object-fit: contain; border-radius: 6px; }
+.app-icon img  { width: calc(clamp(20px, 3vmin, 32px) * var(--is)); height: calc(clamp(20px, 3vmin, 32px) * var(--is)); object-fit: contain; border-radius: clamp(4px, 0.8vmin, 10px); }
 [data-icon-style="bold"] .app-icon svg { stroke-width: 2.5; }
 .app-info { flex: 1; min-width: 0; }
 .app-name { font-size: calc(clamp(10px, 1.8vh, 16px) * var(--ts)); font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
@@ -157,9 +157,10 @@ html, body {
   width: clamp(18px, 2.5vmin, 24px); height: clamp(18px, 2.5vmin, 24px);
   border-radius: 50%; background: var(--surface2); border: 1px solid var(--border);
   display: none; align-items: center; justify-content: center;
-  font-size: clamp(8px, 1.2vmin, 11px); color: var(--muted); cursor: pointer; z-index: 5;
+  color: var(--muted); cursor: pointer; z-index: 5;
   transition: background 0.1s;
 }
+.edit-badge svg { width: clamp(9px, 1.4vmin, 13px); height: clamp(9px, 1.4vmin, 13px); }
 .edit-mode .edit-badge { display: flex; }
 .edit-badge:hover { background: rgba(255,255,255,0.1); color: var(--text); }
 
@@ -174,8 +175,9 @@ html, body {
 .np-bar:nth-child(4) { height: clamp(5px, 1vh, 8px);  animation-delay: 0.1s; }
 @keyframes eq { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.3); } }
 .np-indicator.paused .np-bar { animation: none; transform: scaleY(0.3); opacity: 0.4; }
-.np-label { font-size: clamp(8px, 1.3vh, 13px); color: var(--muted); font-family: var(--font-mono); flex-shrink: 0; }
-.np-track { font-size: clamp(10px, 1.65vh, 15px); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np-track { font-size: clamp(10px, 1.65vh, 15px); color: var(--text); white-space: nowrap; overflow: hidden; }
+.np-track.marquee span { display: inline-block; animation: np-marquee 15s linear infinite; }
+@keyframes np-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .sep { width: 1px; height: 3vh; background: var(--border); margin: 0 2.5vw; flex-shrink: 0; }
 .speed-wrap { display: flex; align-items: baseline; gap: 0.4vw; flex-shrink: 0; }
 .speed-val  {
@@ -199,7 +201,7 @@ html, body {
 /* ══ MODAL BASE ══ */
 .overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.86);
+  background: rgba(0,0,0,0.72);
   z-index: 50; display: flex; align-items: center; justify-content: center;
   opacity: 0; pointer-events: none; transition: opacity 0.15s;
   visibility: hidden;
@@ -421,11 +423,13 @@ html, body {
 }
 .seg-btn:hover { color: var(--text); }
 .seg-btn.active {
-  color: var(--text); background: rgba(126,184,247,0.18);
+  color: var(--text);
+  background: color-mix(in srgb, var(--c1) 18%, transparent);
   box-shadow: inset 0 0 0 1px var(--c1);
 }
 .seg-btn.active-warm {
-  color: var(--text); background: rgba(251,191,36,0.18);
+  color: var(--text);
+  background: color-mix(in srgb, var(--c4) 18%, transparent);
   box-shadow: inset 0 0 0 1px var(--c4);
 }
 
@@ -503,7 +507,7 @@ html, body {
   padding: clamp(8px, 1.5vh, 16px) clamp(4px, 0.8vw, 12px);
   border-radius: clamp(8px, 1.4vmin, 14px);
   cursor: pointer; -webkit-tap-highlight-color: transparent;
-  transition: background 0.13s; text-decoration: none;
+  transition: background 0.13s, transform 0.1s; text-decoration: none;
 }
 .drawer-app:hover  { background: var(--surface2); }
 .drawer-app:active { transform: scale(0.93); }
@@ -530,7 +534,7 @@ html, body {
 
 /* ══ SIDEBAR MODE BUTTON ══ */
 .sb-mode-btn {
-  background: transparent; border: 1px solid transparent;
+  background: transparent; border: 1px solid var(--border);
   border-radius: clamp(7px, 1.2vmin, 12px);
   color: var(--muted); cursor: pointer;
   width: clamp(40px, 6.5vmin, 60px); height: clamp(40px, 6.5vmin, 60px);
@@ -1146,7 +1150,7 @@ function renderGrid() {
         <div class="app-name"${nameStyle}>${btn.label}</div>
         <div class="app-sub"${subStyle}>${btn.sub}</div>
       </div>
-      <div class="edit-badge" onclick="openPicker(${i},event)">✎</div>`;
+      <div class="edit-badge" onclick="openPicker(${i},event)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487z"/></svg></div>`;
     card.addEventListener('click', () => { if (!editMode) handleCardClick(i); });
     grid.appendChild(card);
   });
@@ -1448,8 +1452,21 @@ window.onGpsSpeed = kmh => { document.getElementById('speed-val').textContent = 
 window.onMediaUpdate = track => {
   const el  = document.getElementById('np-track');
   const ind = document.getElementById('np-indicator');
-  if (track) { el.textContent = track; ind.classList.remove('paused'); }
-  else        { el.textContent = 'Nessuna riproduzione'; ind.classList.add('paused'); }
+  el.classList.remove('marquee');
+  if (track) {
+    el.textContent = track;
+    ind.classList.remove('paused');
+    requestAnimationFrame(() => {
+      if (el.scrollWidth > el.clientWidth) {
+        const sep = '   •   ';
+        el.innerHTML = `<span>${track}${sep}${track}${sep}</span>`;
+        el.classList.add('marquee');
+      }
+    });
+  } else {
+    el.textContent = 'Nessuna riproduzione';
+    ind.classList.add('paused');
+  }
 };
 
 window.onPlaybackState = playing => {
