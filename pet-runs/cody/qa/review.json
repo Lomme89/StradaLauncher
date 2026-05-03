@@ -1,0 +1,962 @@
+{
+  "ok": true,
+  "frames_root": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames",
+  "errors": [],
+  "warnings": [],
+  "rows": [
+    {
+      "state": "idle",
+      "expected_frames": 6,
+      "actual_frames": 6,
+      "extraction_method": "components",
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "frames": [
+        {
+          "index": 0,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\idle\\00.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16295,
+          "bbox": [
+            46,
+            5,
+            145,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 67
+        },
+        {
+          "index": 1,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\idle\\01.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16007,
+          "bbox": [
+            47,
+            5,
+            145,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 138
+        },
+        {
+          "index": 2,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\idle\\02.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15987,
+          "bbox": [
+            47,
+            5,
+            144,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 144
+        },
+        {
+          "index": 3,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\idle\\03.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15958,
+          "bbox": [
+            47,
+            5,
+            144,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 95
+        },
+        {
+          "index": 4,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\idle\\04.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15803,
+          "bbox": [
+            47,
+            5,
+            144,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 76
+        },
+        {
+          "index": 5,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\idle\\05.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16079,
+          "bbox": [
+            47,
+            5,
+            145,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 150
+        }
+      ]
+    },
+    {
+      "state": "running-right",
+      "expected_frames": 8,
+      "actual_frames": 8,
+      "extraction_method": "components",
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "frames": [
+        {
+          "index": 0,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-right\\00.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16168,
+          "bbox": [
+            34,
+            5,
+            157,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 177
+        },
+        {
+          "index": 1,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-right\\01.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15672,
+          "bbox": [
+            41,
+            5,
+            150,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 186
+        },
+        {
+          "index": 2,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-right\\02.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16040,
+          "bbox": [
+            35,
+            5,
+            157,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 231
+        },
+        {
+          "index": 3,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-right\\03.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15260,
+          "bbox": [
+            41,
+            5,
+            151,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 163
+        },
+        {
+          "index": 4,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-right\\04.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16573,
+          "bbox": [
+            39,
+            5,
+            152,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 213
+        },
+        {
+          "index": 5,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-right\\05.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15910,
+          "bbox": [
+            35,
+            5,
+            157,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 177
+        },
+        {
+          "index": 6,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-right\\06.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15209,
+          "bbox": [
+            42,
+            5,
+            150,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 177
+        },
+        {
+          "index": 7,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-right\\07.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16279,
+          "bbox": [
+            34,
+            5,
+            157,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 181
+        }
+      ]
+    },
+    {
+      "state": "running-left",
+      "expected_frames": 8,
+      "actual_frames": 8,
+      "extraction_method": "components",
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "frames": [
+        {
+          "index": 0,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-left\\00.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16279,
+          "bbox": [
+            34,
+            5,
+            157,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 181
+        },
+        {
+          "index": 1,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-left\\01.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15209,
+          "bbox": [
+            42,
+            5,
+            150,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 177
+        },
+        {
+          "index": 2,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-left\\02.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15910,
+          "bbox": [
+            35,
+            5,
+            157,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 177
+        },
+        {
+          "index": 3,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-left\\03.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16573,
+          "bbox": [
+            39,
+            5,
+            152,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 213
+        },
+        {
+          "index": 4,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-left\\04.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15260,
+          "bbox": [
+            41,
+            5,
+            151,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 163
+        },
+        {
+          "index": 5,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-left\\05.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16040,
+          "bbox": [
+            35,
+            5,
+            157,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 231
+        },
+        {
+          "index": 6,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-left\\06.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15672,
+          "bbox": [
+            41,
+            5,
+            150,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 186
+        },
+        {
+          "index": 7,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running-left\\07.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16168,
+          "bbox": [
+            34,
+            5,
+            157,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 177
+        }
+      ]
+    },
+    {
+      "state": "waving",
+      "expected_frames": 4,
+      "actual_frames": 4,
+      "extraction_method": "components",
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "frames": [
+        {
+          "index": 0,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\waving\\00.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15822,
+          "bbox": [
+            48,
+            5,
+            144,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 57
+        },
+        {
+          "index": 1,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\waving\\01.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16435,
+          "bbox": [
+            37,
+            5,
+            155,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 81
+        },
+        {
+          "index": 2,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\waving\\02.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15782,
+          "bbox": [
+            46,
+            5,
+            145,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 72
+        },
+        {
+          "index": 3,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\waving\\03.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15771,
+          "bbox": [
+            48,
+            5,
+            144,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 110
+        }
+      ]
+    },
+    {
+      "state": "jumping",
+      "expected_frames": 5,
+      "actual_frames": 5,
+      "extraction_method": "components",
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "frames": [
+        {
+          "index": 0,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\jumping\\00.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 18608,
+          "bbox": [
+            33,
+            5,
+            158,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 137
+        },
+        {
+          "index": 1,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\jumping\\01.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16664,
+          "bbox": [
+            27,
+            5,
+            164,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 168
+        },
+        {
+          "index": 2,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\jumping\\02.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 17325,
+          "bbox": [
+            20,
+            5,
+            172,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 198
+        },
+        {
+          "index": 3,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\jumping\\03.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16574,
+          "bbox": [
+            22,
+            5,
+            170,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 169
+        },
+        {
+          "index": 4,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\jumping\\04.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15213,
+          "bbox": [
+            50,
+            5,
+            141,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 131
+        }
+      ]
+    },
+    {
+      "state": "failed",
+      "expected_frames": 8,
+      "actual_frames": 8,
+      "extraction_method": "components",
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "frames": [
+        {
+          "index": 0,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\failed\\00.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16407,
+          "bbox": [
+            43,
+            5,
+            149,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 141
+        },
+        {
+          "index": 1,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\failed\\01.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16534,
+          "bbox": [
+            42,
+            5,
+            149,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 153
+        },
+        {
+          "index": 2,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\failed\\02.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 17518,
+          "bbox": [
+            38,
+            5,
+            153,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 157
+        },
+        {
+          "index": 3,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\failed\\03.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 21420,
+          "bbox": [
+            28,
+            5,
+            164,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 174
+        },
+        {
+          "index": 4,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\failed\\04.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 21409,
+          "bbox": [
+            28,
+            5,
+            164,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 179
+        },
+        {
+          "index": 5,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\failed\\05.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 22702,
+          "bbox": [
+            18,
+            5,
+            174,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 216
+        },
+        {
+          "index": 6,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\failed\\06.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16617,
+          "bbox": [
+            42,
+            5,
+            150,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 131
+        },
+        {
+          "index": 7,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\failed\\07.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15310,
+          "bbox": [
+            44,
+            5,
+            147,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 188
+        }
+      ]
+    },
+    {
+      "state": "waiting",
+      "expected_frames": 6,
+      "actual_frames": 6,
+      "extraction_method": "components",
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "frames": [
+        {
+          "index": 0,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\waiting\\00.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15782,
+          "bbox": [
+            48,
+            5,
+            144,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 99
+        },
+        {
+          "index": 1,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\waiting\\01.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15766,
+          "bbox": [
+            48,
+            5,
+            143,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 173
+        },
+        {
+          "index": 2,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\waiting\\02.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15887,
+          "bbox": [
+            46,
+            5,
+            146,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 131
+        },
+        {
+          "index": 3,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\waiting\\03.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15824,
+          "bbox": [
+            48,
+            5,
+            144,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 109
+        },
+        {
+          "index": 4,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\waiting\\04.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15656,
+          "bbox": [
+            48,
+            5,
+            143,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 161
+        },
+        {
+          "index": 5,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\waiting\\05.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15541,
+          "bbox": [
+            48,
+            5,
+            143,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 143
+        }
+      ]
+    },
+    {
+      "state": "running",
+      "expected_frames": 6,
+      "actual_frames": 6,
+      "extraction_method": "components",
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "frames": [
+        {
+          "index": 0,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running\\00.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15573,
+          "bbox": [
+            37,
+            5,
+            154,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 160
+        },
+        {
+          "index": 1,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running\\01.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15227,
+          "bbox": [
+            38,
+            5,
+            153,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 163
+        },
+        {
+          "index": 2,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running\\02.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15661,
+          "bbox": [
+            34,
+            5,
+            157,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 128
+        },
+        {
+          "index": 3,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running\\03.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16036,
+          "bbox": [
+            37,
+            5,
+            155,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 170
+        },
+        {
+          "index": 4,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running\\04.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15377,
+          "bbox": [
+            38,
+            5,
+            154,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 149
+        },
+        {
+          "index": 5,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\running\\05.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15779,
+          "bbox": [
+            39,
+            5,
+            152,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 166
+        }
+      ]
+    },
+    {
+      "state": "review",
+      "expected_frames": 6,
+      "actual_frames": 6,
+      "extraction_method": "components",
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "frames": [
+        {
+          "index": 0,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\review\\00.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 14234,
+          "bbox": [
+            51,
+            5,
+            140,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 115
+        },
+        {
+          "index": 1,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\review\\01.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16818,
+          "bbox": [
+            33,
+            5,
+            158,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 101
+        },
+        {
+          "index": 2,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\review\\02.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 14227,
+          "bbox": [
+            51,
+            5,
+            140,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 136
+        },
+        {
+          "index": 3,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\review\\03.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 14286,
+          "bbox": [
+            50,
+            5,
+            141,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 110
+        },
+        {
+          "index": 4,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\review\\04.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 16344,
+          "bbox": [
+            39,
+            5,
+            153,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 129
+        },
+        {
+          "index": 5,
+          "file": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\frames\\review\\05.png",
+          "width": 192,
+          "height": 208,
+          "nontransparent_pixels": 15136,
+          "bbox": [
+            47,
+            5,
+            144,
+            203
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 100
+        }
+      ]
+    }
+  ]
+}

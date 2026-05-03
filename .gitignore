@@ -1,26 +1,32 @@
-# Gradle
+# Gradle / Android build
 .gradle/
 build/
 **/build/
 
-# Local properties (contains SDK path - machine specific)
+# Local machine config
 local.properties
 
-# Android Studio
+# Android Studio / IntelliJ
 .idea/
 *.iml
 *.iws
 *.ipr
-
-# IntelliJ
 out/
 
-# Kotlin
+# Java / Kotlin build output
 *.class
 
-# Misc
+# Local agent/tooling output
+.claude/settings.local.json
+.gh-auth.*
+.graphify_python
+.uv-bin/
+.uv-cache/
+.uv-tools/
+graphify-out/
+
+# OS / temp files
+.DS_Store
+Thumbs.db
 nul
 *.orig
-
-# Local generated pet assets
-pet-runs/

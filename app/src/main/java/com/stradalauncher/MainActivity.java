@@ -76,6 +76,11 @@ public class MainActivity extends AppCompatActivity {
     private volatile String appsJsonMemCache = null;
     private volatile String appsHashCache    = null;
     private volatile float  cachedBrightness = -1f;
+    private volatile MediaController activeController = null;
+    private MediaSessionManager.OnActiveSessionsChangedListener sessionsChangedListener;
+    private long pollIntervalMs = 2000L;
+    private static final long POLL_MIN_MS  = 2000L;
+    private static final long POLL_MAX_MS  = 15000L;
 
     // ─── LOCATION LISTENER ───────────────────────────────────────────────────
     private final LocationListener locationListener = new LocationListener() {
@@ -163,17 +168,20 @@ public class MainActivity extends AppCompatActivity {
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
-        s.setAllowFileAccessFromFileURLs(true);
-        s.setAllowUniversalAccessFromFileURLs(true);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
         s.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         s.setBlockNetworkLoads(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try { android.webkit.WebView.setSafeBrowsingWhitelist(java.util.Collections.emptyList(), null); } catch (Throwable ignored) {}
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             s.setOffscreenPreRaster(true);
+            try { s.setSafeBrowsingEnabled(false); } catch (Throwable ignored) {}
         }
 
+        webView.setBackgroundColor(android.graphics.Color.BLACK);
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         webView.setWebChromeClient(new WebChromeClient());
@@ -225,6 +233,11 @@ public class MainActivity extends AppCompatActivity {
         if (packageReceiver != null) {
             try { unregisterReceiver(packageReceiver); } catch (Exception ignored) {}
         }
+        if (sessionsChangedListener != null && msmCached != null) {
+            try { msmCached.removeOnActiveSessionsChangedListener(sessionsChangedListener); } catch (Exception ignored) {}
+            sessionsChangedListener = null;
+        }
+        mediaHandler.removeCallbacksAndMessages(null);
         appsExecutor.shutdown();
         mediaExecutor.shutdown();
     }
@@ -313,19 +326,21 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void mediaAction(String action) {
             try {
-                MediaSessionManager msm = msmCached;
-                if (msm == null) return;
-                ComponentName cn = new ComponentName(MainActivity.this, MediaListenerService.class);
-                List<MediaController> controllers = msm.getActiveSessions(cn);
-                if (controllers.isEmpty()) return;
-                MediaController.TransportControls tc = controllers.get(0).getTransportControls();
+                MediaController mc = activeController;
+                if (mc == null) {
+                    // try opportunistic refresh once
+                    refreshActiveControllerNow();
+                    mc = activeController;
+                    if (mc == null) return;
+                }
+                MediaController.TransportControls tc = mc.getTransportControls();
                 switch (action) {
                     case "play":   tc.play(); break;
                     case "pause":  tc.pause(); break;
                     case "next":   tc.skipToNext(); break;
                     case "prev":   tc.skipToPrevious(); break;
                     case "toggle":
-                        PlaybackState ps = controllers.get(0).getPlaybackState();
+                        PlaybackState ps = mc.getPlaybackState();
                         if (ps != null && ps.getState() == PlaybackState.STATE_PLAYING) tc.pause();
                         else tc.play();
                         break;
@@ -374,20 +389,28 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public void setScreenBrightness(float brightness) {
-            float clamped = Math.max(0.01f, Math.min(1.0f, brightness));
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.System.canWrite(MainActivity.this)) {
-                Settings.System.putInt(getContentResolver(),
-                    Settings.System.SCREEN_BRIGHTNESS_MODE,
-                    Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
-                Settings.System.putInt(getContentResolver(),
-                    Settings.System.SCREEN_BRIGHTNESS,
-                    Math.round(clamped * 255));
-            }
+            final float clamped = Math.max(0.01f, Math.min(1.0f, brightness));
+            // window param flip is cheap, keep on UI thread
             runOnUiThread(() -> {
                 WindowManager.LayoutParams lp = getWindow().getAttributes();
                 lp.screenBrightness = clamped;
                 getWindow().setAttributes(lp);
             });
+            // Settings.System.putInt() can do disk I/O — push off-thread
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.System.canWrite(MainActivity.this)) {
+                appsExecutor.execute(() -> {
+                    try {
+                        Settings.System.putInt(getContentResolver(),
+                            Settings.System.SCREEN_BRIGHTNESS_MODE,
+                            Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+                        Settings.System.putInt(getContentResolver(),
+                            Settings.System.SCREEN_BRIGHTNESS,
+                            Math.round(clamped * 255));
+                    } catch (Throwable t) {
+                        Log.w(TAG, "setScreenBrightness write failed", t);
+                    }
+                });
+            }
         }
 
         @JavascriptInterface
@@ -511,6 +534,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private static final int ICON_PX = 64;
     private String buildAppsJson(List<ResolveInfo> apps, PackageManager pm) throws Exception {
         ExecutorService iconPool = Executors.newFixedThreadPool(ICON_THREADS);
         try {
@@ -523,14 +547,21 @@ public class MainActivity extends AppCompatActivity {
                         obj.put("packageName", info.activityInfo.packageName);
                         try {
                             Drawable d = info.loadIcon(pm);
-                            Bitmap bmp = Bitmap.createBitmap(40, 40, Bitmap.Config.ARGB_8888);
+                            Bitmap bmp = Bitmap.createBitmap(ICON_PX, ICON_PX, Bitmap.Config.ARGB_8888);
                             Canvas c = new Canvas(bmp);
-                            d.setBounds(0, 0, 40, 40);
+                            d.setBounds(0, 0, ICON_PX, ICON_PX);
                             d.draw(c);
-                            ByteArrayOutputStream bos = new ByteArrayOutputStream(2048);
-                            bmp.compress(Bitmap.CompressFormat.JPEG, 55, bos);
+                            ByteArrayOutputStream bos = new ByteArrayOutputStream(3072);
+                            String mime;
+                            if (Build.VERSION.SDK_INT >= 30) {
+                                bmp.compress(Bitmap.CompressFormat.WEBP_LOSSY, 70, bos);
+                                mime = "image/webp";
+                            } else {
+                                bmp.compress(Bitmap.CompressFormat.WEBP, 70, bos);
+                                mime = "image/webp";
+                            }
                             bmp.recycle();
-                            obj.put("icon", "data:image/jpeg;base64," +
+                            obj.put("icon", "data:" + mime + ";base64," +
                                 Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP));
                         } catch (Throwable ignored) {
                             obj.put("icon", "");
@@ -640,56 +671,96 @@ public class MainActivity extends AppCompatActivity {
     private String lastTrack = "";
     private boolean lastPlayState = false;
 
+    private final Runnable mediaPollRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mediaExecutor.execute(() -> pollMediaSession());
+            mediaHandler.postDelayed(this, pollIntervalMs);
+        }
+    };
+
     private void startMediaPolling() {
-        mediaHandler.postDelayed(new Runnable() {
+        registerSessionsListener();
+        refreshActiveControllerNow();
+        mediaHandler.postDelayed(mediaPollRunnable, 500);
+    }
+
+    private void registerSessionsListener() {
+        if (sessionsChangedListener != null || msmCached == null) return;
+        sessionsChangedListener = new MediaSessionManager.OnActiveSessionsChangedListener() {
             @Override
-            public void run() {
-                mediaExecutor.execute(() -> pollMediaSession());
-                mediaHandler.postDelayed(this, 2000);
+            public void onActiveSessionsChanged(List<MediaController> controllers) {
+                activeController = (controllers != null && !controllers.isEmpty()) ? controllers.get(0) : null;
+                pollIntervalMs = POLL_MIN_MS;
+                mediaHandler.removeCallbacks(mediaPollRunnable);
+                mediaHandler.post(mediaPollRunnable);
             }
-        }, 500);
+        };
+        try {
+            ComponentName cn = new ComponentName(MainActivity.this, MediaListenerService.class);
+            msmCached.addOnActiveSessionsChangedListener(sessionsChangedListener, cn, mediaHandler);
+        } catch (SecurityException ignored) {
+            // listener service not enabled — caught later in poll
+        } catch (Exception e) {
+            Log.w(TAG, "addOnActiveSessionsChangedListener failed", e);
+        }
+    }
+
+    private void refreshActiveControllerNow() {
+        try {
+            if (msmCached == null) return;
+            ComponentName cn = new ComponentName(MainActivity.this, MediaListenerService.class);
+            List<MediaController> controllers = msmCached.getActiveSessions(cn);
+            activeController = (controllers != null && !controllers.isEmpty()) ? controllers.get(0) : null;
+        } catch (SecurityException ignored) {
+        } catch (Exception e) {
+            Log.w(TAG, "refreshActiveControllerNow failed", e);
+        }
     }
 
     private void pollMediaSession() {
         try {
-            MediaSessionManager msm = msmCached;
-            if (msm == null) return;
-            ComponentName cn = new ComponentName(MainActivity.this, MediaListenerService.class);
-            List<MediaController> controllers = msm.getActiveSessions(cn);
+            MediaController mc = activeController;
+            if (mc == null) {
+                clearMediaState();
+                pollIntervalMs = Math.min(POLL_MAX_MS, pollIntervalMs * 2L);
+                return;
+            }
+            pollIntervalMs = POLL_MIN_MS;
 
-            if (controllers.isEmpty()) { clearMediaState(); return; }
-
-            MediaController mc = controllers.get(0);
             MediaMetadata meta = mc.getMetadata();
             PlaybackState state = mc.getPlaybackState();
             boolean playing = state != null && state.getState() == PlaybackState.STATE_PLAYING;
 
-            if (playing != lastPlayState) {
-                lastPlayState = playing;
-                runOnUiThread(() -> webView.evaluateJavascript(
-                    "if(window.onPlaybackState) window.onPlaybackState(" + lastPlayState + ");", null));
+            String title  = meta != null ? meta.getString(MediaMetadata.METADATA_KEY_TITLE)  : null;
+            String artist = meta != null ? meta.getString(MediaMetadata.METADATA_KEY_ARTIST) : null;
+            String titleSafe  = title  != null ? title  : "";
+            String artistSafe = artist != null ? artist : "";
+            String trackKey   = artistSafe + "—" + titleSafe;
+            boolean trackChanged = meta != null && !trackKey.equals(lastTrack);
+            boolean playStateChanged = playing != lastPlayState;
+
+            if (!trackChanged && !playStateChanged && meta != null) return;
+            if (meta == null && !lastTrack.isEmpty()) {
+                clearMediaState();
+                return;
             }
 
-            if (meta != null) {
-                String title  = meta.getString(MediaMetadata.METADATA_KEY_TITLE);
-                String artist = meta.getString(MediaMetadata.METADATA_KEY_ARTIST);
-                String titleSafe  = title  != null ? title  : "";
-                String artistSafe = artist != null ? artist : "";
-                String trackKey   = artistSafe + "—" + titleSafe;
-                if (!trackKey.equals(lastTrack)) {
-                    lastTrack = trackKey;
-                    String artB64 = extractArtBase64(meta);
-                    final String ft = titleSafe, fa = artistSafe, fart = artB64;
-                    runOnUiThread(() -> {
-                        webView.evaluateJavascript(
-                            "if(window.onMediaUpdate) window.onMediaUpdate(" + JSONObject.quote(ft) + "," + JSONObject.quote(fa) + ");", null);
-                        webView.evaluateJavascript(
-                            "if(window.onAlbumArt) window.onAlbumArt(" + JSONObject.quote(fart) + ");", null);
-                    });
-                }
-            } else if (!lastTrack.isEmpty()) {
-                clearMediaState();
+            StringBuilder js = new StringBuilder(256);
+            if (playStateChanged) {
+                lastPlayState = playing;
+                js.append("if(window.onPlaybackState) window.onPlaybackState(").append(playing).append(");");
             }
+            if (trackChanged) {
+                lastTrack = trackKey;
+                String artB64 = extractArtBase64(meta);
+                js.append("if(window.onMediaUpdate) window.onMediaUpdate(")
+                  .append(JSONObject.quote(titleSafe)).append(",").append(JSONObject.quote(artistSafe)).append(");")
+                  .append("if(window.onAlbumArt) window.onAlbumArt(").append(JSONObject.quote(artB64)).append(");");
+            }
+            if (js.length() == 0) return;
+            final String script = js.toString();
+            runOnUiThread(() -> webView.evaluateJavascript(script, null));
         } catch (SecurityException e) {
             // NotificationListenerService non ancora abilitato
         } catch (Exception e) {
@@ -720,11 +791,11 @@ public class MainActivity extends AppCompatActivity {
     private void clearMediaState() {
         if (!lastTrack.isEmpty() || lastPlayState) {
             lastTrack = ""; lastPlayState = false;
-            runOnUiThread(() -> {
-                webView.evaluateJavascript("if(window.onMediaUpdate) window.onMediaUpdate('','');", null);
-                webView.evaluateJavascript("if(window.onAlbumArt) window.onAlbumArt('');", null);
-                webView.evaluateJavascript("if(window.onPlaybackState) window.onPlaybackState(false);", null);
-            });
+            final String script =
+                "if(window.onMediaUpdate) window.onMediaUpdate('','');" +
+                "if(window.onAlbumArt) window.onAlbumArt('');" +
+                "if(window.onPlaybackState) window.onPlaybackState(false);";
+            runOnUiThread(() -> webView.evaluateJavascript(script, null));
         }
     }
 

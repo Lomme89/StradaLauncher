@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "run_dir": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody",
+  "spritesheet": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\final\\spritesheet.webp",
+  "validation": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\final\\validation.json",
+  "contact_sheet": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\qa\\contact-sheet.png",
+  "review": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\qa\\review.json",
+  "videos": null,
+  "package": "D:\\Download\\CarLauncher\\CarLauncher\\pet-runs\\cody\\package\\cody"
+}
